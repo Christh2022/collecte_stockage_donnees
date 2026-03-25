@@ -24,6 +24,9 @@ bokeh==3.6.1
 # --- Monitoring AWS CloudWatch ---
 watchtower==3.3.0
 
+# --- Kafka ---
+kafka-python==2.0.2
+
 # --- Utilitaires ---
 python-dotenv==1.0.1
 tqdm==4.67.1

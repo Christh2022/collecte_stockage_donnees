@@ -1,6 +1,7 @@
 # ============================================================
 # docker-compose.yml — Projet DPIA
-# Infrastructure complète : Pipeline, Airflow, Kafka, Grafana
+# Infrastructure complète : Pipeline, Airflow, Kafka,
+# Prometheus, Grafana, MinIO, Producer, Consumer
 # ============================================================
 
 x-airflow-common: &airflow-common
@@ -42,7 +43,7 @@ services:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - dpia-net
@@ -150,8 +151,62 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - dpia-net
+
+  # ========== API PRODUCER (Adzuna → Kafka) ==========
+  api-producer:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: dpia-api-producer
+    env_file:
+      - ../.env
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - ../src:/app/src
+    command: ["python", "-m", "src.scraping.api_producer"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - dpia-net
+
+  # ========== KAFKA → S3 CONSUMER ==========
+  s3-consumer:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: dpia-s3-consumer
+    env_file:
+      - ../.env
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MINIO_ENDPOINT: http://minio:9000
+    volumes:
+      - ../src:/app/src
+    command: ["python", "-m", "src.storage.kafka_to_s3_consumer"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - dpia-net

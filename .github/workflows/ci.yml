@@ -6,6 +6,10 @@ on:
     pull_request:
         branches: [main, develop]
 
+permissions:
+    contents: read
+    packages: write
+
 env:
     PYTHON_VERSION: "3.11"
     DOCKER_IMAGE: ghcr.io/${{ github.repository }}

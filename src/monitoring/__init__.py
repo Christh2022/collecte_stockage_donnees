@@ -1,18 +1,9 @@
 """
-Module de logging centralisé vers AWS CloudWatch Logs.
+"""Module monitoring — logging console (dev) ou CloudWatch (prod)."""
 
-Usage:
-    from src.monitoring.logger import get_logger
-    logger = get_logger("scraper")
-    logger.info("Scraping démarré")
-    logger.error("Erreur de connexion", extra={"url": "..."})
-"""
+from src.monitoring.logger import get_logger
 
-import logging
-import os
-
-import boto3
-import watchtower
+__all__ = ["get_logger"]
 
 
 LOG_GROUP = os.getenv("CLOUDWATCH_LOG_GROUP", "/dpia/pipeline")

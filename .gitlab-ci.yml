@@ -113,5 +113,5 @@ test:unit:
 #     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
 #     S3_BUCKET_NAME: $S3_BUCKET_NAME
 #   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  when: manual
+#     - if: $CI_COMMIT_BRANCH == "main"
+#   when: manual
