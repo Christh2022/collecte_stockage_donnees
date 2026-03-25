@@ -1,0 +1,77 @@
+# ============================================================
+# .gitignore — Projet DPIA (Python / Docker / AWS)
+# ============================================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# ---------- Jupyter / IPython ----------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ---------- IDE / Editors ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Docker ----------
+docker-compose.override.yml
+
+# ---------- AWS / Secrets ----------
+.env
+.env.*
+*.pem
+*.key
+aws_credentials
+credentials.json
+config.json
+
+# Ne jamais commit de clés ou tokens
+*secret*
+*credential*
+
+# ---------- Données locales ----------
+data/
+*.csv
+*.parquet
+*.json
+!requirements.txt
+!package.json
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- Coverage / Tests ----------
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
