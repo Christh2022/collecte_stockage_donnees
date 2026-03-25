@@ -1,8 +1,13 @@
 """
 Consumer Kafka → S3/MinIO.
 
-Lit le topic `job_offers_raw` depuis Kafka et téléverse les messages
-par lots (batches) vers S3 ou MinIO via boto3.
+Lit le topic `job_api_raw` depuis Kafka et téléverse les messages
+par lots vers S3 ou MinIO. Un batch est écrit quand :
+    - 50 messages sont accumulés, OU
+    - 1 minute s'est écoulée depuis le dernier flush
+
+Les fichiers sont partitionnés par date :
+    raw/adzuna/YYYY/MM/DD/<timestamp>_batch_<id>.jsonl
 
 Usage:
     python -m src.storage.kafka_to_s3_consumer
@@ -17,6 +22,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 
 import boto3
 from kafka import KafkaConsumer
@@ -27,14 +33,14 @@ load_dotenv()
 
 # ── Configuration ──────────────────────────────────────────
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
-KAFKA_TOPIC = os.getenv("KAFKA_TOPIC_RAW", "job_offers_raw")
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC_RAW", "job_api_raw")
 KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "s3-consumer-group")
 
 S3_BUCKET = os.getenv("S3_BUCKET_NAME", "dpia-data-bucket")
 S3_PREFIX = os.getenv("S3_PREFIX", "raw/adzuna")
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")  # None en prod → AWS S3
 
-BATCH_SIZE = int(os.getenv("CONSUMER_BATCH_SIZE", "100"))
+BATCH_SIZE = int(os.getenv("CONSUMER_BATCH_SIZE", "50"))
 BATCH_TIMEOUT = int(os.getenv("CONSUMER_BATCH_TIMEOUT", "60"))
 
 
@@ -43,7 +49,6 @@ def create_s3_client():
     kwargs = {}
 
     if MINIO_ENDPOINT:
-        # Dev local → MinIO
         kwargs.update(
             endpoint_url=MINIO_ENDPOINT,
             aws_access_key_id=os.getenv("MINIO_ROOT_USER", "minioadmin"),
@@ -51,7 +56,6 @@ def create_s3_client():
         )
         print(f"[S3] Mode MinIO → {MINIO_ENDPOINT}")
     else:
-        # Prod → AWS S3 (credentials via env ou IAM role)
         print(f"[S3] Mode AWS S3 → region {os.getenv('AWS_DEFAULT_REGION', 'eu-west-1')}")
 
     return boto3.client("s3", **kwargs)
@@ -68,7 +72,6 @@ def create_consumer(retries: int = 5, delay: int = 5) -> KafkaConsumer:
                 auto_offset_reset="earliest",
                 enable_auto_commit=False,
                 value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-                consumer_timeout_ms=BATCH_TIMEOUT * 1000,
             )
             print(f"[OK] Consumer connecté à Kafka ({KAFKA_BOOTSTRAP}), topic '{KAFKA_TOPIC}'")
             return consumer
@@ -79,12 +82,18 @@ def create_consumer(retries: int = 5, delay: int = 5) -> KafkaConsumer:
     sys.exit(1)
 
 
+def build_s3_key(batch_id: int) -> str:
+    """Construit un chemin S3 partitionné par date : raw/adzuna/YYYY/MM/DD/..."""
+    now = datetime.now(timezone.utc)
+    date_partition = now.strftime("%Y/%m/%d")
+    timestamp = now.strftime("%Y%m%d_%H%M%S")
+    return f"{S3_PREFIX}/{date_partition}/{timestamp}_batch_{batch_id:04d}.jsonl"
+
+
 def upload_batch(s3_client, batch: list[dict], batch_id: int) -> str:
     """Téléverse un lot de messages en JSON Lines vers S3/MinIO."""
-    timestamp = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-    key = f"{S3_PREFIX}/{timestamp}_batch_{batch_id:04d}.jsonl"
+    key = build_s3_key(batch_id)
 
-    # Format JSON Lines (une offre par ligne)
     content = "\n".join(json.dumps(record, ensure_ascii=False) for record in batch)
     body = io.BytesIO(content.encode("utf-8"))
 
@@ -100,47 +109,52 @@ def main():
     batch: list[dict] = []
     batch_id = 0
     total_uploaded = 0
+    last_flush_time = time.monotonic()
 
-    print(f"[INFO] Consommation en cours (batch_size={BATCH_SIZE})...\n")
+    print(f"[INFO] Consommation en cours (batch={BATCH_SIZE} msgs / {BATCH_TIMEOUT}s)...\n")
 
     try:
         while True:
-            # Poll avec timeout
-            records = consumer.poll(timeout_ms=BATCH_TIMEOUT * 1000)
-
-            if not records:
-                # Timeout atteint → flush le batch partiel
-                if batch:
-                    upload_batch(s3_client, batch, batch_id)
-                    total_uploaded += len(batch)
-                    batch_id += 1
-                    batch = []
-                    consumer.commit()
-                continue
+            # Poll avec un court timeout pour vérifier régulièrement le timer
+            poll_timeout_ms = min(5000, BATCH_TIMEOUT * 1000)
+            records = consumer.poll(timeout_ms=poll_timeout_ms)
 
             for topic_partition, messages in records.items():
                 for message in messages:
                     batch.append(message.value)
 
+                    # Flush si le batch atteint la taille max
                     if len(batch) >= BATCH_SIZE:
                         upload_batch(s3_client, batch, batch_id)
                         total_uploaded += len(batch)
                         batch_id += 1
                         batch = []
                         consumer.commit()
+                        last_flush_time = time.monotonic()
+
+            # Flush si le timeout est atteint avec des messages en attente
+            elapsed = time.monotonic() - last_flush_time
+            if batch and elapsed >= BATCH_TIMEOUT:
+                upload_batch(s3_client, batch, batch_id)
+                total_uploaded += len(batch)
+                batch_id += 1
+                batch = []
+                consumer.commit()
+                last_flush_time = time.monotonic()
 
     except KeyboardInterrupt:
         print("\n[STOP] Arrêt demandé.")
     finally:
-        # Flush le reste
         if batch:
             upload_batch(s3_client, batch, batch_id)
             total_uploaded += len(batch)
+            batch_id += 1
             consumer.commit()
 
         consumer.close()
-        print(f"[TERMINÉ] {total_uploaded} records uploadés en {batch_id + 1} batches.")
+        print(f"[TERMINÉ] {total_uploaded} records uploadés en {batch_id} batches.")
 
 
 if __name__ == "__main__":
+    main()
     main()
