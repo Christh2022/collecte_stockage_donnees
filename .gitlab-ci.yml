@@ -65,41 +65,53 @@ test:unit:
     - if: $CI_COMMIT_BRANCH == "develop"
   allow_failure: false
 
-# ==================== DEPLOY ====================
-deploy:staging:
-  stage: deploy
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - echo "Déploiement staging — à configurer selon l'infra cible"
-    # - docker pull $DOCKER_IMAGE
-    # - docker compose -f infra/docker-compose.yml up -d
-  environment:
-    name: staging
-  rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
-  when: manual
-
-deploy:production:
-  stage: deploy
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - echo "Déploiement production — à configurer selon l'infra cible"
-    # - docker pull $DOCKER_IMAGE
-    # - docker compose -f infra/docker-compose.yml up -d
-  environment:
-    name: production
-  rules:
+# ==================== DEPLOY (désactivé — en attente du compte AWS) ====================
+# deploy:staging:
+#   stage: deploy
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   variables:
+#     DOCKER_TLS_CERTDIR: "/certs"
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - echo "Déploiement staging"
+#   environment:
+#     name: staging
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "develop"
+#   when: manual
+#
+# deploy:production:
+#   stage: deploy
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   variables:
+#     DOCKER_TLS_CERTDIR: "/certs"
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - echo "Déploiement production"
+#   environment:
+#     name: production
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main"
+#   when: manual
+#
+# setup:s3-encryption:
+#   stage: deploy
+#   image: python:3.11-slim
+#   before_script:
+#     - pip install --cache-dir $PIP_CACHE_DIR -r requirements.txt
+#   script:
+#     - python -m infra.aws.setup_s3_encryption
+#   variables:
+#     AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+#     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+#     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+#     S3_BUCKET_NAME: $S3_BUCKET_NAME
+#   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   when: manual

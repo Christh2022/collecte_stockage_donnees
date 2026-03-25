@@ -21,6 +21,9 @@ psycopg2-binary==2.9.10
 plotly==5.24.1
 bokeh==3.6.1
 
+# --- Monitoring AWS CloudWatch ---
+watchtower==3.3.0
+
 # --- Utilitaires ---
 python-dotenv==1.0.1
 tqdm==4.67.1

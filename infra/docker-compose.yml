@@ -156,7 +156,36 @@ services:
     networks:
       - dpia-net
 
-  # ========== GRAFANA (Monitoring & Dashboards) ==========
+  # ========== PROMETHEUS (Collecte de métriques) ==========
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: dpia-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    restart: unless-stopped
+    networks:
+      - dpia-net
+
+  # ========== POSTGRES EXPORTER (métriques PostgreSQL → Prometheus) ==========
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: dpia-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://airflow:airflow@postgres:5432/airflow?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dpia-net
+
+  # ========== GRAFANA (Dashboards + Prometheus datasource) ==========
   grafana:
     image: grafana/grafana:11.2.0
     container_name: dpia-grafana
@@ -167,10 +196,51 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
-      postgres:
-        condition: service_healthy
+      - prometheus
     restart: unless-stopped
+    networks:
+      - dpia-net
+
+  # ========== MINIO (Stockage S3 local) ==========
+  minio:
+    image: minio/minio:RELEASE.2024-10-02T17-50-41Z
+    container_name: dpia-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - dpia-net
+
+  # ========== MINIO INIT (création du bucket par défaut) ==========
+  minio-init:
+    image: minio/mc:RELEASE.2024-10-02T08-27-28Z
+    container_name: dpia-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/dpia-data-bucket &&
+        mc anonymous set none local/dpia-data-bucket &&
+        echo "Bucket dpia-data-bucket créé avec succès"
+    restart: "no"
     networks:
       - dpia-net
 
@@ -180,7 +250,9 @@ volumes:
   airflow-logs:
   zookeeper-data:
   kafka-data:
+  prometheus-data:
   grafana-data:
+  minio-data:
 
 # ========== RÉSEAU ==========
 networks:
