@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Installation des dépendances Python (layer cache optimisé)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=300 -r requirements.txt
 
 # Copie du code source (ignoré en dev grâce aux volumes)
 COPY src/ ./src/

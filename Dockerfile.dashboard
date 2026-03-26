@@ -1,0 +1,36 @@
+# ============================================================
+# Dockerfile.dashboard — Dashboard Dash + Bokeh
+# Image légère pour le dashboard interactif
+# ============================================================
+
+FROM python:3.11-slim
+
+LABEL maintainer="DPIA Team"
+LABEL description="Dashboard interactif Dash/Plotly + Bokeh"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc libpq-dev curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements-dashboard.txt .
+RUN pip install --no-cache-dir --default-timeout=300 -r requirements-dashboard.txt
+
+COPY src/ ./src/
+
+RUN useradd --create-home appuser
+USER appuser
+
+EXPOSE 8050
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD curl -f http://localhost:8050/ || exit 1
+
+CMD ["python", "-m", "src.visualization.app"]

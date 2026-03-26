@@ -1,0 +1,160 @@
+/* ── KPI Card Styles ─────────────────────────────────── */
+
+.kpi-card {
+    border-radius: 14px !important;
+    border: 1px solid rgba(27, 73, 101, .06) !important;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 1px 2px rgba(0, 0, 0, .03);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1),
+                box-shadow 0.25s cubic-bezier(.4,0,.2,1);
+    height: 100%;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(27, 73, 101, .12),
+                0 4px 10px rgba(27, 73, 101, .06);
+}
+
+/* Ensure equal-height cards in each row */
+#kpi-row .row > [class*="col"] {
+    display: flex;
+}
+
+#kpi-row .row > [class*="col"] > .kpi-card {
+    width: 100%;
+}
+
+/* ── Skeleton Shimmer Effect ──────────────────────────── */
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+/* ── Pulse animation for the "Pipeline actif" dot ────── */
+@keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px #2D936C; }
+    50%      { opacity: .55; box-shadow: 0 0 12px #2D936C; }
+}
+
+/* ── Sidebar nav link — deep dark minimalist ─────────── */
+.sidebar-nav-link {
+    transition: background-color 0.15s ease !important;
+}
+.sidebar-nav-link:hover {
+    background-color: #1F2937 !important;
+}
+
+/* ── Sidebar dropdown overrides ──────────────────────── */
+.sidebar-dropdown .Select-control,
+.sidebar-dropdown .dash-dropdown .Select-control {
+    background-color: #1F2937 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 8px !important;
+    color: #D1D5DB !important;
+    font-size: 13px !important;
+    min-height: 36px !important;
+}
+.sidebar-dropdown .Select-value-label,
+.sidebar-dropdown .Select-placeholder {
+    color: #D1D5DB !important;
+}
+.sidebar-dropdown .Select-menu-outer {
+    background-color: #1F2937 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 0 0 8px 8px !important;
+}
+.sidebar-dropdown .VirtualizedSelectOption {
+    background-color: #1F2937 !important;
+    color: #D1D5DB !important;
+}
+.sidebar-dropdown .VirtualizedSelectFocusedOption {
+    background-color: #374151 !important;
+}
+.sidebar-dropdown .Select-arrow-zone .Select-arrow {
+    border-top-color: #6B7280 !important;
+}
+
+/* ── Sidebar scrollbar ───────────────────────────────── */
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.08);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,.16);
+}
+
+/* ── Sidebar range slider customization ──────────────── */
+.rc-slider-track {
+    background-color: #3B82F6 !important;
+}
+.rc-slider-handle {
+    border-color: #3B82F6 !important;
+    background-color: #3B82F6 !important;
+}
+.rc-slider-rail {
+    background-color: #374151 !important;
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #e8ecf1 25%,
+        #d5dbe3 37%,
+        #e8ecf1 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 6px;
+}
+
+/* ── Skeleton icon (circle) ── */
+.skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+}
+
+/* ── Skeleton large number ── */
+.skeleton-number {
+    width: 100px;
+    height: 28px;
+    margin: 0 auto 10px;
+    border-radius: 6px;
+}
+
+/* ── Skeleton label ── */
+.skeleton-label {
+    width: 80px;
+    height: 13px;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+/* ── Skeleton chart bar ── */
+.skeleton-bar {
+    height: 18px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+/* ── Skeleton title line ── */
+.skeleton-title-line {
+    width: 35%;
+    height: 14px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+/* ── Smooth reveal when content loads ── */
+.dash-loading .dash-loading-callback {
+    transition: opacity 0.3s ease;
+}
