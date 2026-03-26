@@ -19,7 +19,6 @@ import io
 import json
 import os
 import re
-import sys
 import time
 from datetime import datetime, timezone
 
@@ -66,7 +65,7 @@ def create_s3_client():
         )
         print(f"[S3] Mode MinIO → {MINIO_ENDPOINT}")
     else:
-        print(f"[S3] Mode AWS S3")
+        print("[S3] Mode AWS S3")
     return boto3.client("s3", **kwargs)
 
 

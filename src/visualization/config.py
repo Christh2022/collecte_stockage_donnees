@@ -103,9 +103,12 @@ HARD_SKILLS = ["python", "sql", "r", "scala", "java", "spark", "tensorflow",
                "snowflake", "bigquery", "databricks", "kafka", "dbt"]
 
 REMOTE_PATTERNS = {
-    "Full Remote": re.compile(r"full\s*remote|100\s*%?\s*remote|télétravail\s*complet|fully\s*remote", re.I),
-    "Hybride": re.compile(r"hybride|hybrid|télétravail\s*partiel|remote\s*partiel|\d+\s*j(?:ours?)?\s*/?\s*semaine", re.I),
-    "Présentiel": re.compile(r"présentiel|sur\s*site|on[\s-]?site|pas\s*de\s*télétravail|no\s*remote", re.I),
+    "Full Remote": re.compile(
+        r"full\s*remote|100\s*%?\s*remote|télétravail\s*complet|fully\s*remote", re.I),
+    "Hybride": re.compile(
+        r"hybride|hybrid|télétravail\s*partiel|remote\s*partiel|\d+\s*j(?:ours?)?\s*/?\s*semaine", re.I),
+    "Présentiel": re.compile(
+        r"présentiel|sur\s*site|on[\s-]?site|pas\s*de\s*télétravail|no\s*remote", re.I),
 }
 
 CITY_POPULATION = {

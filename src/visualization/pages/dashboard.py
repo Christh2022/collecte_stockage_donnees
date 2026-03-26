@@ -23,131 +23,134 @@ from src.visualization.data import _read_store
 def layout():
     return [
 
-    # KPI Row
-    dcc.Loading(
-        id="loading-kpis",
-        custom_spinner=make_skeleton_kpi_row(),
-        children=html.Div(id="kpi-row", style={"minHeight": "130px"}),
-        className="mb-4"
-    ),
+        # KPI Row
+        dcc.Loading(
+            id="loading-kpis",
+            custom_spinner=make_skeleton_kpi_row(),
+            children=html.Div(id="kpi-row", style={"minHeight": "130px"}),
+            className="mb-4"
+        ),
 
-    # Charts Row 1: Histogram + Pie
-    dbc.Row([
-        dbc.Col(
-            chart_card("Distribution des salaires",
-                       dcc.Loading(
-                           id="loading-hist",
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-salary-hist",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=7, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Répartition des contrats",
-                       dcc.Loading(
-                           id="loading-pie",
-                           custom_spinner=make_skeleton_chart("320px"),
-                           children=dcc.Graph(id="chart-contract-pie",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=5, md=12, className="mb-4",
-        ),
-    ]),
+        # Charts Row 1: Histogram + Pie
+        dbc.Row([
+            dbc.Col(
+                chart_card("Distribution des salaires",
+                           dcc.Loading(
+                               id="loading-hist",
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-salary-hist",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=7, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Répartition des contrats",
+                           dcc.Loading(
+                               id="loading-pie",
+                               custom_spinner=make_skeleton_chart("320px"),
+                               children=dcc.Graph(id="chart-contract-pie",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=5, md=12, className="mb-4",
+            ),
+        ]),
 
-    # Map
-    dbc.Row([
-        dbc.Col(
-            chart_card("Carte des offres — France",
-                       dcc.Loading(
-                           id="loading-map",
-                           custom_spinner=make_skeleton_map(),
-                           children=dcc.Graph(id="chart-map",
-                                              config={"displayModeBar": False}),
-                       )),
-            width=12, className="mb-4",
-        ),
-    ]),
+        # Map
+        dbc.Row([
+            dbc.Col(
+                chart_card("Carte des offres — France",
+                           dcc.Loading(
+                               id="loading-map",
+                               custom_spinner=make_skeleton_map(),
+                               children=dcc.Graph(id="chart-map",
+                                                  config={"displayModeBar": False}),
+                           )),
+                width=12, className="mb-4",
+            ),
+        ]),
 
-    # Charts Row 2: Skills + Bokeh
-    dbc.Row([
-        dbc.Col(
-            chart_card("Top 15 Compétences",
-                       dcc.Loading(
-                           id="loading-skills",
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-skills",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Évolution des publications",
-                       dcc.Loading(
-                           id="loading-bokeh",
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=html.Iframe(id="bokeh-chart", style={
-                               "width": "100%", "height": "380px",
-                               "border": "none", "borderRadius": "8px",
-                           }),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        # Charts Row 2: Skills + Bokeh
+        dbc.Row([
+            dbc.Col(
+                chart_card("Top 15 Compétences",
+                           dcc.Loading(
+                               id="loading-skills",
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-skills",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Évolution des publications",
+                           dcc.Loading(
+                               id="loading-bokeh",
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=html.Iframe(id="bokeh-chart", style={
+                                   "width": "100%", "height": "380px",
+                                   "border": "none", "borderRadius": "8px",
+                               }),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
-    # Table
-    dbc.Row([
-        dbc.Col(
-            chart_card("Offres détaillées",
-                       dcc.Loading(
-                           id="loading-table",
-                           custom_spinner=make_skeleton_table(),
-                           children=dash_table.DataTable(
-                               id="data-table",
-                               columns=[
-                                   {"name": "Titre", "id": "title"},
-                                   {"name": "Entreprise", "id": "company"},
-                                   {"name": "Ville", "id": "city_clean"},
-                                   {"name": "Contrat", "id": "contract_type"},
-                                   {"name": "Salaire moy.", "id": "salary_avg",
-                                    "type": "numeric"},
-                                   {"name": "Tech Stack", "id": "tech_stack"},
-                               ],
-                               page_size=12, sort_action="native",
-                               filter_action="native",
-                               style_table={"overflowX": "auto"},
-                               style_header={
-                                   "backgroundColor": PALETTE["primary"],
-                                   "color": PALETTE["white"],
-                                   "fontWeight": "600", "fontSize": "12px",
-                                   "textTransform": "uppercase",
-                                   "letterSpacing": "0.5px",
-                                   "border": "none", "padding": "12px",
-                               },
-                               style_cell={
-                                   "backgroundColor": PALETTE["white"],
-                                   "color": PALETTE["dark"],
-                                   "border": f"1px solid {PALETTE['light_bg']}",
-                                   "padding": "10px 14px",
-                                   "fontSize": "13px", "maxWidth": "260px",
-                                   "overflow": "hidden",
-                                   "textOverflow": "ellipsis",
-                                   "fontFamily": "Inter, sans-serif",
-                                   "textAlign": "left",
-                               },
-                               style_data_conditional=[
-                                   {"if": {"row_index": "odd"},
-                                    "backgroundColor": "#F1F5F9"},
-                               ],
-                               style_filter={
-                                   "backgroundColor": "#F1F5F9",
-                                   "fontSize": "12px",
-                               },
-                           ),
-                       )),
-            width=12, className="mb-4",
-        ),
-    ]),
+        # Table
+        dbc.Row([
+            dbc.Col(
+                chart_card("Offres détaillées",
+                           dcc.Loading(
+                               id="loading-table",
+                               custom_spinner=make_skeleton_table(),
+                               children=dash_table.DataTable(
+                                   id="data-table",
+                                   columns=[
+                                       {"name": "Titre", "id": "title"},
+                                       {"name": "Entreprise", "id": "company"},
+                                       {"name": "Ville", "id": "city_clean"},
+                                       {"name": "Contrat", "id": "contract_type"},
+                                       {"name": "Salaire moy.", "id": "salary_avg",
+                                        "type": "numeric"},
+                                       {"name": "Tech Stack", "id": "tech_stack"},
+                                   ],
+                                   page_size=12, sort_action="native",
+                                   filter_action="native",
+                                   style_table={"overflowX": "auto"},
+                                   style_header={
+                                       "backgroundColor": PALETTE["primary"],
+                                       "color": PALETTE["white"],
+                                       "fontWeight": "600",
+                                       "fontSize": "12px",
+                                       "textTransform": "uppercase",
+                                       "letterSpacing": "0.5px",
+                                       "border": "none",
+                                       "padding": "12px",
+                                   },
+                                   style_cell={
+                                       "backgroundColor": PALETTE["white"],
+                                       "color": PALETTE["dark"],
+                                       "border": f"1px solid {PALETTE['light_bg']}",
+                                       "padding": "10px 14px",
+                                       "fontSize": "13px",
+                                       "maxWidth": "260px",
+                                       "overflow": "hidden",
+                                       "textOverflow": "ellipsis",
+                                       "fontFamily": "Inter, sans-serif",
+                                       "textAlign": "left",
+                                   },
+                                   style_data_conditional=[
+                                       {"if": {"row_index": "odd"},
+                                        "backgroundColor": "#F1F5F9"},
+                                   ],
+                                   style_filter={
+                                       "backgroundColor": "#F1F5F9",
+                                       "fontSize": "12px",
+                                   },
+                               ),
+                           )),
+                width=12, className="mb-4",
+            ),
+        ]),
 
     ]
 
@@ -252,7 +255,7 @@ def register_callbacks(app):
         fig.add_vline(x=avg, line_dash="dash", line_color=PALETTE["danger"],
                       annotation_text=f"Moy: {avg:,.0f} €",
                       annotation_font=dict(color=PALETTE["danger"], size=12,
-                                            family="Inter"))
+                                           family="Inter"))
         return fig
 
     @app.callback(Output("chart-contract-pie", "figure"), Input("filtered-data", "data"))

@@ -20,51 +20,51 @@ from src.visualization.data import _read_store
 def layout():
     return [
 
-    section_title("fa-solid fa-heart-pulse", "Data Health — Qualité des données"),
+        section_title("fa-solid fa-heart-pulse", "Data Health — Qualité des données"),
 
-    html.Div(id="kpi-row-qualite", style={"minHeight": "100px"}),
+        html.Div(id="kpi-row-qualite", style={"minHeight": "100px"}),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Taux de complétude par champ",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-completeness",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Répartition par source & dédoublonnage",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-source-dedup",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Taux de complétude par champ",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-completeness",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Répartition par source & dédoublonnage",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-source-dedup",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Valeurs manquantes — Heatmap",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-missing-heatmap",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Volume par source & fraîcheur",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-source-freshness",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Valeurs manquantes — Heatmap",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-missing-heatmap",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Volume par source & fraîcheur",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-source-freshness",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
     ]
 

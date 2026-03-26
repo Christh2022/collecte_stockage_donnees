@@ -3,7 +3,6 @@ Sidebar + Header layout.
 """
 
 import pandas as pd
-import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from src.visualization.config import PALETTE, SB
@@ -132,9 +131,11 @@ sidebar = html.Div([
             }),
             dcc.RangeSlider(
                 id="filter-salary", min=0, max=150, step=5, value=[0, 150],
-                marks={i: {"label": f"{i}k",
-                            "style": {"color": SB["text_dim"], "fontSize": "10px"}}
-                       for i in range(0, 151, 50)},
+                marks={
+                    i: {"label": f"{i}k",
+                        "style": {"color": SB["text_dim"], "fontSize": "10px"}}
+                    for i in range(0, 151, 50)
+                },
                 tooltip={"placement": "bottom", "always_visible": False},
             ),
         ]),
@@ -214,7 +215,10 @@ def _header_stat(icon, label, value, color=PALETTE["primary"]):
 
 # Compute header stats from DF
 _n_offers = f"{len(DF):,}".replace(",", "\u202f")
-_n_companies = f"{DF['company'].nunique():,}".replace(",", "\u202f") if "company" in DF.columns and not DF.empty else "—"
+_n_companies = (
+    f"{DF['company'].nunique():,}".replace(",", "\u202f")
+    if "company" in DF.columns and not DF.empty else "—"
+)
 _n_cities = str(DF["city_clean"].nunique()) if "city_clean" in DF.columns and not DF.empty else "—"
 _avg_salary = (
     f"{DF['salary_avg'].dropna().mean() / 1000:.0f}k€"

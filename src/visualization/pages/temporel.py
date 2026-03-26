@@ -18,51 +18,51 @@ from src.visualization.data import JOUR_FR, _read_store
 def layout():
     return [
 
-    section_title("fa-solid fa-clock", "Analyse Temporelle & Fraîcheur"),
+        section_title("fa-solid fa-clock", "Analyse Temporelle & Fraîcheur"),
 
-    html.Div(id="kpi-row-temporel", style={"minHeight": "100px"}),
+        html.Div(id="kpi-row-temporel", style={"minHeight": "100px"}),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Jour de publication préféré",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-pub-weekday",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Volume de publications par heure",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-pub-hour",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Jour de publication préféré",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-pub-weekday",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Volume de publications par heure",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-pub-hour",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Cumul d'offres dans le temps",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-cumulative",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Fraîcheur des offres (âge en jours)",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-freshness",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Cumul d'offres dans le temps",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-cumulative",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Fraîcheur des offres (âge en jours)",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-freshness",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
     ]
 

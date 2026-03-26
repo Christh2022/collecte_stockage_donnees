@@ -19,51 +19,51 @@ from src.visualization.data import _detect_remote, _read_store
 def layout():
     return [
 
-    section_title("fa-solid fa-earth-europe", "Géographie & Télétravail"),
+        section_title("fa-solid fa-earth-europe", "Géographie & Télétravail"),
 
-    html.Div(id="kpi-row-geographie", style={"minHeight": "100px"}),
+        html.Div(id="kpi-row-geographie", style={"minHeight": "100px"}),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Coefficient Télétravail & impact salaire",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-remote-salary",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Hubs dynamiques — Densité offres / ville",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("350px"),
-                           children=dcc.Graph(id="chart-hub-density",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Coefficient Télétravail & impact salaire",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-remote-salary",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Hubs dynamiques — Densité offres / ville",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("350px"),
+                               children=dcc.Graph(id="chart-hub-density",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Carte des offres — France",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_map(),
-                           children=dcc.Graph(id="chart-map-geo",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=7, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Top 10 villes — Nombre d'offres",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("400px"),
-                           children=dcc.Graph(id="chart-top-cities",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=5, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Carte des offres — France",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_map(),
+                               children=dcc.Graph(id="chart-map-geo",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=7, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Top 10 villes — Nombre d'offres",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("400px"),
+                               children=dcc.Graph(id="chart-top-cities",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=5, md=12, className="mb-4",
+            ),
+        ]),
 
     ]
 
@@ -85,7 +85,11 @@ def register_callbacks(app):
                 make_kpi_card("fa-solid fa-map-pin", "Paris", "0%"),
             ], className="g-4 mb-4")
         n_cities = df["city_clean"].nunique() if "city_clean" in df.columns else 0
-        top_city = df["city_clean"].value_counts().idxmax() if "city_clean" in df.columns and not df["city_clean"].isna().all() else "N/A"
+        top_city = (
+            df["city_clean"].value_counts().idxmax()
+            if "city_clean" in df.columns and not df["city_clean"].isna().all()
+            else "N/A"
+        )
         df_tmp = df.copy()
         df_tmp["_wm"] = df_tmp.apply(_detect_remote, axis=1)
         remote_pct = (df_tmp["_wm"] == "Full Remote").mean() * 100

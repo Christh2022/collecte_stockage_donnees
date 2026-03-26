@@ -9,7 +9,7 @@ from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import html
 
 from src.visualization.config import PALETTE
 
@@ -129,8 +129,8 @@ def chart_card(title, children, height=None):
     return dbc.Card([
         dbc.CardHeader(
             html.H6(title, className="mb-0",
-                     style={"fontWeight": "600", "color": PALETTE["dark"],
-                            "fontFamily": "Inter, sans-serif"}),
+                    style={"fontWeight": "600", "color": PALETTE["dark"],
+                           "fontFamily": "Inter, sans-serif"}),
             style={"backgroundColor": PALETTE["white"],
                    "borderBottom": f"2px solid {PALETTE['accent']}",
                    "padding": "14px 20px"},
@@ -152,15 +152,17 @@ def _skel(width="100%", height="20px", radius="6px", mb="0"):
 
 def make_skeleton_card():
     return dbc.Col(
-        dbc.Card(dbc.CardBody([
-            _skel("48px", "48px", "50%", "12px"),
-            _skel("100px", "28px", "6px", "10px"),
-            _skel("80px", "13px", "4px"),
-        ], style={"textAlign": "center", "padding": "24px 16px",
-                  "display": "flex", "flexDirection": "column",
-                  "alignItems": "center"}),
-        style={"borderRadius": "12px", "border": "none",
-               "boxShadow": "0 2px 12px rgba(0,0,0,.06)"}),
+        dbc.Card(
+            dbc.CardBody([
+                _skel("48px", "48px", "50%", "12px"),
+                _skel("100px", "28px", "6px", "10px"),
+                _skel("80px", "13px", "4px"),
+            ], style={"textAlign": "center", "padding": "24px 16px",
+                      "display": "flex", "flexDirection": "column",
+                      "alignItems": "center"}),
+            style={"borderRadius": "12px", "border": "none",
+                   "boxShadow": "0 2px 12px rgba(0,0,0,.06)"},
+        ),
         xs=12, sm=6, lg=True, className="mb-3",
     )
 
@@ -249,7 +251,7 @@ def empty_fig(msg="Aucune donnée"):
     fig.update_layout(
         template="plotly_white",
         annotations=[{"text": msg, "showarrow": False,
-                       "font": {"size": 15, "color": PALETTE["muted"]}}],
+                      "font": {"size": 15, "color": PALETTE["muted"]}}],
         margin=dict(t=20, b=20, l=20, r=20),
     )
     return fig

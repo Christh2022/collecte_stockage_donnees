@@ -27,60 +27,60 @@ from src.visualization.data import (
 def layout():
     return [
 
-    section_title("fa-solid fa-microchip", "Analyse Tech Stack — Clusters de compétences"),
+        section_title("fa-solid fa-microchip", "Analyse Tech Stack — Clusters de compétences"),
 
-    html.Div(id="kpi-row-competences", style={"minHeight": "100px"}),
+        html.Div(id="kpi-row-competences", style={"minHeight": "100px"}),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Le « Power Trio » — Python + SQL + Cloud",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("300px"),
-                           children=dcc.Graph(id="chart-power-trio",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=4, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("IA Générative vs Outils traditionnels",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("300px"),
-                           children=dcc.Graph(id="chart-genai-vs-trad",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=4, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Hard Skills vs Soft Skills",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("300px"),
-                           children=dcc.Graph(id="chart-hard-vs-soft",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=4, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Le « Power Trio » — Python + SQL + Cloud",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("300px"),
+                               children=dcc.Graph(id="chart-power-trio",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=4, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("IA Générative vs Outils traditionnels",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("300px"),
+                               children=dcc.Graph(id="chart-genai-vs-trad",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=4, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Hard Skills vs Soft Skills",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("300px"),
+                               children=dcc.Graph(id="chart-hard-vs-soft",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=4, md=12, className="mb-4",
+            ),
+        ]),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Top compétences par type de contrat",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("400px"),
-                           children=dcc.Graph(id="chart-skills-by-contract",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=7, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Cloud Provider — Répartition",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("400px"),
-                           children=dcc.Graph(id="chart-cloud-providers",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=5, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Top compétences par type de contrat",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("400px"),
+                               children=dcc.Graph(id="chart-skills-by-contract",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=7, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Cloud Provider — Répartition",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("400px"),
+                               children=dcc.Graph(id="chart-cloud-providers",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=5, md=12, className="mb-4",
+            ),
+        ]),
 
     ]
 

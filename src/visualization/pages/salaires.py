@@ -22,51 +22,51 @@ from src.visualization.data import _read_store, _text_blob
 def layout():
     return [
 
-    section_title("fa-solid fa-coins", "Analyse Salaires — Premium compétences"),
+        section_title("fa-solid fa-coins", "Analyse Salaires — Premium compétences"),
 
-    html.Div(id="kpi-row-salaires", style={"minHeight": "100px"}),
+        html.Div(id="kpi-row-salaires", style={"minHeight": "100px"}),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Premium salarial par compétence",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("380px"),
-                           children=dcc.Graph(id="chart-skill-premium",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=7, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Salaire moyen par source",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("380px"),
-                           children=dcc.Graph(id="chart-salary-source",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=5, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Premium salarial par compétence",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("380px"),
+                               children=dcc.Graph(id="chart-skill-premium",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=7, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Salaire moyen par source",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("380px"),
+                               children=dcc.Graph(id="chart-salary-source",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=5, md=12, className="mb-4",
+            ),
+        ]),
 
-    dbc.Row([
-        dbc.Col(
-            chart_card("Salaire moyen par ville (Top 10)",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("380px"),
-                           children=dcc.Graph(id="chart-salary-city",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-        dbc.Col(
-            chart_card("Distribution salariale par contrat",
-                       dcc.Loading(
-                           custom_spinner=make_skeleton_chart("380px"),
-                           children=dcc.Graph(id="chart-salary-boxplot",
-                                              config={"displayModeBar": False}),
-                       )),
-            lg=6, md=12, className="mb-4",
-        ),
-    ]),
+        dbc.Row([
+            dbc.Col(
+                chart_card("Salaire moyen par ville (Top 10)",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("380px"),
+                               children=dcc.Graph(id="chart-salary-city",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+            dbc.Col(
+                chart_card("Distribution salariale par contrat",
+                           dcc.Loading(
+                               custom_spinner=make_skeleton_chart("380px"),
+                               children=dcc.Graph(id="chart-salary-boxplot",
+                                                  config={"displayModeBar": False}),
+                           )),
+                lg=6, md=12, className="mb-4",
+            ),
+        ]),
 
     ]
 
