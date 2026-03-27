@@ -55,10 +55,30 @@ test:unit:
   stage: test
   image: python:3.11-slim
   before_script:
-    - pip install --cache-dir $PIP_CACHE_DIR -r requirements.txt
-    - pip install --cache-dir $PIP_CACHE_DIR pytest
+    - pip install --cache-dir $PIP_CACHE_DIR
+        -r requirements.txt -r requirements-dashboard.txt
+    - pip install --cache-dir $PIP_CACHE_DIR pytest pytest-cov
   script:
-    - pytest tests/ -v --tb=short
+    - pytest tests/test_unit_*.py tests/test_smoke.py
+        -v --tb=short
+        --cov=src --cov-report=term-missing
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+  allow_failure: false
+
+test:integration:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - pip install --cache-dir $PIP_CACHE_DIR
+        -r requirements.txt -r requirements-dashboard.txt
+    - pip install --cache-dir $PIP_CACHE_DIR pytest pytest-cov
+  script:
+    - pytest tests/test_integration.py
+        -v --tb=short
+        --cov=src --cov-report=term-missing
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
