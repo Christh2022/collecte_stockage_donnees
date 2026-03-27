@@ -115,8 +115,8 @@
       "type": "gauge",
       "targets": [
         {
-          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/mnt/host/c\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/mnt/host/c\",fstype!=\"tmpfs\"}) * 100",
-          "legendFormat": "Disque C:",
+          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}) * 100",
+          "legendFormat": "Disque /",
           "refId": "A"
         }
       ]
@@ -142,8 +142,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "node_filesystem_avail_bytes{mountpoint=\"/mnt/host/c\",fstype!=\"tmpfs\"}",
-          "legendFormat": "C: libre",
+          "expr": "node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}",
+          "legendFormat": "/ libre",
           "refId": "A"
         }
       ]

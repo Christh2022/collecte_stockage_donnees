@@ -16,7 +16,7 @@ def _sidebar_section_title(label):
             "fontSize": "10px", "fontWeight": "600",
             "letterSpacing": "0.05em", "color": SB["text_dim"],
             "textTransform": "uppercase",
-            "padding": "0 0 8px 0", "margin": "0",
+            "padding": "0 0 8px 16px", "margin": "0",
         },
     )
 
