@@ -85,53 +85,65 @@ test:integration:
     - if: $CI_COMMIT_BRANCH == "develop"
   allow_failure: false
 
-# ==================== DEPLOY (désactivé — en attente du compte AWS) ====================
-# deploy:staging:
-#   stage: deploy
-#   image: docker:24
-#   services:
-#     - docker:24-dind
-#   variables:
-#     DOCKER_TLS_CERTDIR: "/certs"
-#   before_script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#   script:
-#     - echo "Déploiement staging"
-#   environment:
-#     name: staging
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "develop"
-#   when: manual
-#
-# deploy:production:
-#   stage: deploy
-#   image: docker:24
-#   services:
-#     - docker:24-dind
-#   variables:
-#     DOCKER_TLS_CERTDIR: "/certs"
-#   before_script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#   script:
-#     - echo "Déploiement production"
-#   environment:
-#     name: production
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "main"
-#   when: manual
-#
-# setup:s3-encryption:
-#   stage: deploy
-#   image: python:3.11-slim
-#   before_script:
-#     - pip install --cache-dir $PIP_CACHE_DIR -r requirements.txt
-#   script:
-#     - python -m infra.aws.setup_s3_encryption
-#   variables:
-#     AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-#     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-#     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-#     S3_BUCKET_NAME: $S3_BUCKET_NAME
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "main"
-#   when: manual
+# ==================== DEPLOY (via GitLab Runner shell sur EC2) ====================
+deploy:staging:
+  stage: deploy
+  tags:
+    - ec2-shell
+  script:
+    - cd $PROJECT_DIR
+    - git fetch origin develop
+    - git checkout develop
+    - git pull origin develop
+    - cd infra
+    - docker compose pull
+    - docker compose up -d --force-recreate
+    - echo "Staging deploy OK"
+  environment:
+    name: staging
+  variables:
+    PROJECT_DIR: ~/collecte_stockage_donnees
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  when: manual
+
+deploy:production:
+  stage: deploy
+  tags:
+    - ec2-shell
+  script:
+    - cd $PROJECT_DIR
+    - git fetch origin main
+    - git checkout main
+    - git pull origin main
+    - cd infra
+    - docker compose pull
+    - docker compose up -d --force-recreate
+    - echo "Waiting for Airflow webserver..."
+    - timeout 300 bash -c 'until curl -sf http://localhost:8080/health; do sleep 10; done' || echo "Airflow still starting..."
+    - echo "Production deploy OK"
+  environment:
+    name: production
+  variables:
+    PROJECT_DIR: ~/collecte_stockage_donnees
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  when: manual
+
+setup:s3-encryption:
+  stage: deploy
+  tags:
+    - ec2-shell
+  script:
+    - cd $PROJECT_DIR
+    - pip install -r requirements.txt
+    - python -m infra.aws.setup_s3_encryption
+  variables:
+    PROJECT_DIR: ~/collecte_stockage_donnees
+    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+    S3_BUCKET_NAME: $S3_BUCKET_NAME
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  when: manual
