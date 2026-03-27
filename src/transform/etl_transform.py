@@ -414,12 +414,31 @@ def infer_contract_from_text(df: pd.DataFrame) -> pd.DataFrame:
 
 def normalize_city(series: pd.Series) -> pd.Series:
     """Normalise les noms de ville."""
+    import re as _re
     s = series.fillna("Non precise").str.strip().str.title()
-    return s.replace({
+
+    # Mapping direct
+    direct = {
         "Paris, France": "Paris",
         "Ile-De-France": "Paris",
         "Ile De France": "Paris",
-    })
+        "France": "Non precise",
+        "Haute-Garonne, Occitanie": "Toulouse",
+        "Nord, Hauts-De-France": "Lille",
+        "Rhône, Auvergne-Rhône-Alpes": "Lyon",
+        "Bouches-Du-Rhône, Provence-Alpes-Côte D'Azur": "Marseille",
+    }
+    s = s.replace(direct)
+
+    # Arrondissements parisiens → Paris
+    s = s.apply(lambda x: "Paris" if _re.match(
+        r"^\d+(Er|Ème|E)\s+Arrondissement,?\s*Paris", str(x)) else x)
+
+    # "Ville, Région/Département" → garder la ville principale
+    # Ex: "Paris, Ile-De-France" → "Paris", "Levallois-Perret, Nanterre" → "Levallois-Perret"
+    s = s.apply(lambda x: str(x).split(",")[0].strip() if "," in str(x) else x)
+
+    return s
 
 
 def normalize_dataframe(df: pd.DataFrame, source: str) -> pd.DataFrame:

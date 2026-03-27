@@ -106,11 +106,19 @@ deploy:production:
   tags:
     - ec2-shell
   script:
-    - mkdir -p data/clean
+    - mkdir -p data/clean && chmod -R 777 data/
     - env | grep -E '^(ENV_MODE|AWS_|S3_|RDS_|CLOUDWATCH_|MINIO_|ADZUNA_|KAFKA_|CONSUMER_|API_|ETL_)' > .env || true
     - cd infra
     - docker compose pull
     - docker compose up -d --force-recreate
+    - echo "Waiting for PostgreSQL..."
+    - timeout 60 bash -c 'until docker exec dpia-postgres pg_isready -U airflow; do sleep 3; done'
+    - docker exec dpia-postgres psql -U airflow -tc "SELECT 1 FROM pg_database WHERE datname='dpia_db'" | grep -q 1 || docker exec dpia-postgres psql -U airflow -c "CREATE DATABASE dpia_db;"
+    - echo "Waiting for ETL to finish..."
+    - timeout 120 bash -c 'until [ "$(docker inspect -f {{.State.Status}} dpia-etl-transform 2>/dev/null)" = "exited" ]; do sleep 5; done' || true
+    - docker restart dpia-etl-transform
+    - sleep 30
+    - docker restart dpia-dashboard
     - echo "Waiting for Airflow webserver..."
     - timeout 300 bash -c 'until curl -sf http://localhost:8080/health; do sleep 10; done' || echo "Airflow still starting..."
     - echo "Production deploy OK"
