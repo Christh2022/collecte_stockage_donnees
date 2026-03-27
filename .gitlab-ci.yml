@@ -88,6 +88,8 @@ test:integration:
 # ==================== DEPLOY (via GitLab Runner shell sur EC2) ====================
 deploy:staging:
   stage: deploy
+  tags:
+    - ec2-shell
   script:
     - cd $PROJECT_DIR
     - git fetch origin develop
@@ -106,6 +108,8 @@ deploy:staging:
 
 deploy:production:
   stage: deploy
+  tags:
+    - ec2-shell
   script:
     - cd $PROJECT_DIR
     - git fetch origin main
@@ -126,6 +130,8 @@ deploy:production:
 
 setup:s3-encryption:
   stage: deploy
+  tags:
+    - ec2-shell
   script:
     - cd $PROJECT_DIR
     - pip install -r requirements.txt
