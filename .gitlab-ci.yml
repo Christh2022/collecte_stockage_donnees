@@ -106,6 +106,8 @@ deploy:production:
   tags:
     - ec2-shell
   script:
+    - mkdir -p data/clean
+    - env | grep -E '^(ENV_MODE|AWS_|S3_|RDS_|CLOUDWATCH_|MINIO_|ADZUNA_|KAFKA_|CONSUMER_|API_|ETL_)' > .env || true
     - cd infra
     - docker compose pull
     - docker compose up -d --force-recreate
