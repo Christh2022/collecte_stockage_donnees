@@ -1,0 +1,48 @@
+# ============================================================
+# alert_rules.yml — Règles d'alerte Prometheus pour DPIA
+# ============================================================
+
+groups:
+  - name: vps_alerts
+    rules:
+      # --- CPU > 90% pendant 5 minutes ---
+      - alert: HighCpuUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU du VPS > 90% depuis 5 min"
+          description: "Utilisation CPU moyenne : {{ $value | printf \"%.1f\" }}%"
+
+      # --- RAM > 85% pendant 5 minutes ---
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM du VPS > 85% depuis 5 min"
+          description: "Utilisation RAM : {{ $value | printf \"%.1f\" }}%"
+
+      # --- Disque > 85% ---
+      - alert: DiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/mnt/host/c",fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/mnt/host/c",fstype!="tmpfs"}) * 100 > 85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Espace disque < 15% restant"
+          description: "Disque utilisé à {{ $value | printf \"%.1f\" }}%"
+
+  - name: container_alerts
+    rules:
+      # --- Conteneur consomme > 90% de sa limite mémoire ---
+      - alert: ContainerMemoryHigh
+        expr: docker_container_memory_percent{name=~"dpia-.*"} > 90
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.name }} utilise > 90% de sa RAM limite"
+          description: "Mémoire : {{ $value | printf \"%.1f\" }}% de la limite"

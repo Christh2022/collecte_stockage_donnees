@@ -283,6 +283,49 @@ services:
     networks:
       - dpia-net
 
+  # ========== NODE EXPORTER (Métriques CPU/RAM/Disque du host) ==========
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: dpia-node-exporter
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|snap|run)($$|/)"
+      - "--no-collector.arp"
+      - "--no-collector.btrfs"
+      - "--no-collector.ipvs"
+      - "--no-collector.wifi"
+      - "--no-collector.infiniband"
+      - "--no-collector.zfs"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
+    pid: host
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
+          memory: 128M
+    networks:
+      - dpia-net
+
+  # ========== DOCKER EXPORTER (Métriques par conteneur via Docker socket) ==========
+  docker-exporter:
+    build:
+      context: ./docker-exporter
+    container_name: dpia-docker-exporter
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.05"
+          memory: 64M
+    networks:
+      - dpia-net
+
   # ========== PROMETHEUS (Collecte de métriques) ==========
   prometheus:
     image: prom/prometheus:v2.54.0
@@ -291,16 +334,20 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=15d"
+    depends_on:
+      - node-exporter
+      - docker-exporter
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: "0.05"
-          memory: 192M
+          cpus: "0.10"
+          memory: 256M
     networks:
       - dpia-net
 
@@ -322,8 +369,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.05"
-          memory: 192M
+          cpus: "0.10"
+          memory: 256M
     networks:
       - dpia-net
 
