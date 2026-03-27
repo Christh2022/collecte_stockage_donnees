@@ -91,18 +91,13 @@ deploy:staging:
   tags:
     - ec2-shell
   script:
-    - cd $PROJECT_DIR
-    - git fetch origin develop
-    - git checkout develop
-    - git pull origin develop
     - cd infra
+    - cp $CI_PROJECT_DIR/.env . 2>/dev/null || true
     - docker compose pull
     - docker compose up -d --force-recreate
     - echo "Staging deploy OK"
   environment:
     name: staging
-  variables:
-    PROJECT_DIR: ~/collecte_stockage_donnees
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
 
@@ -111,10 +106,6 @@ deploy:production:
   tags:
     - ec2-shell
   script:
-    - cd $PROJECT_DIR
-    - git fetch origin main
-    - git checkout main
-    - git pull origin main
     - cd infra
     - docker compose pull
     - docker compose up -d --force-recreate
@@ -123,8 +114,6 @@ deploy:production:
     - echo "Production deploy OK"
   environment:
     name: production
-  variables:
-    PROJECT_DIR: ~/collecte_stockage_donnees
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -133,11 +122,9 @@ setup:s3-encryption:
   tags:
     - ec2-shell
   script:
-    - cd $PROJECT_DIR
     - pip install -r requirements.txt
     - python -m infra.aws.setup_s3_encryption
   variables:
-    PROJECT_DIR: ~/collecte_stockage_donnees
     AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
