@@ -133,4 +133,4 @@ setup:s3-encryption:
     S3_BUCKET_NAME: $S3_BUCKET_NAME
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-  when: manual
+      when: manual
