@@ -417,6 +417,12 @@ def normalize_city(series: pd.Series) -> pd.Series:
     import re as _re
     s = series.fillna("Non precise").str.strip().str.title()
 
+    # Filtrer les entrées JSON/HTML invalides
+    s = s.apply(lambda x: "Non precise" if any(k in str(x) for k in [
+        "{", "}", "Props", "Authenticated", "@Context", "Schema.Org",
+        "Http", "<", ">", "\\",
+    ]) else x)
+
     # Mapping direct
     direct = {
         "Paris, France": "Paris",
@@ -427,6 +433,14 @@ def normalize_city(series: pd.Series) -> pd.Series:
         "Nord, Hauts-De-France": "Lille",
         "Rhône, Auvergne-Rhône-Alpes": "Lyon",
         "Bouches-Du-Rhône, Provence-Alpes-Côte D'Azur": "Marseille",
+        "Hauts-De-Seine, Ile-De-France": "Paris",
+        "Gironde, Nouvelle-Aquitaine": "Bordeaux",
+        "Loire-Atlantique, Pays De La Loire": "Nantes",
+        "Bas-Rhin, Grand Est": "Strasbourg",
+        "Hérault, Occitanie": "Montpellier",
+        "Ille-Et-Vilaine, Bretagne": "Rennes",
+        "Isère, Auvergne-Rhône-Alpes": "Grenoble",
+        "Alpes-Maritimes, Provence-Alpes-Côte D'Azur": "Nice",
     }
     s = s.replace(direct)
 
@@ -435,7 +449,6 @@ def normalize_city(series: pd.Series) -> pd.Series:
         r"^\d+(Er|Ème|E)\s+Arrondissement,?\s*Paris", str(x)) else x)
 
     # "Ville, Région/Département" → garder la ville principale
-    # Ex: "Paris, Ile-De-France" → "Paris", "Levallois-Perret, Nanterre" → "Levallois-Perret"
     s = s.apply(lambda x: str(x).split(",")[0].strip() if "," in str(x) else x)
 
     return s
