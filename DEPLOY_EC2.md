@@ -18,14 +18,14 @@
    - **Paire de clés** : sélectionnez ou créez une clé `.pem`
 3. **Groupe de sécurité** — ouvrir les ports entrants :
 
-   | Port  | Protocole | Source    | Usage              |
-   |-------|-----------|----------|--------------------|
-   | 22    | TCP       | Votre IP | SSH                |
-   | 8080  | TCP       | Votre IP | Airflow Webserver  |
-   | 8050  | TCP       | Votre IP | Dashboard Dash     |
-   | 9090  | TCP       | Votre IP | Prometheus         |
-   | 3000  | TCP       | Votre IP | Grafana            |
-   | 9001  | TCP       | Votre IP | MinIO Console      |
+   | Port | Protocole | Source   | Usage             |
+   | ---- | --------- | -------- | ----------------- |
+   | 22   | TCP       | Votre IP | SSH               |
+   | 8080 | TCP       | Votre IP | Airflow Webserver |
+   | 8050 | TCP       | Votre IP | Dashboard Dash    |
+   | 9090 | TCP       | Votre IP | Prometheus        |
+   | 3000 | TCP       | Votre IP | Grafana           |
+   | 9001 | TCP       | Votre IP | MinIO Console     |
 
 4. Lancez l'instance et notez l'**IP publique**
 
@@ -70,6 +70,7 @@ docker compose version
 ```
 
 > **Déconnectez-vous et reconnectez-vous** pour que le groupe docker soit pris en compte :
+>
 > ```bash
 > exit
 > ssh -i "votre-cle.pem" ubuntu@<IP_PUBLIQUE_EC2>
@@ -195,12 +196,12 @@ sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/collecte_stockage_
 
 Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez (si besoin pour la prod) :
 
-| Variable               | Valeur                    | Protégé | Masqué |
-|------------------------|---------------------------|---------|--------|
-| `AWS_ACCESS_KEY_ID`    | Votre clé AWS             | Oui     | Oui    |
-| `AWS_SECRET_ACCESS_KEY`| Votre secret AWS          | Oui     | Oui    |
-| `AWS_DEFAULT_REGION`   | `eu-west-1`               | Non     | Non    |
-| `S3_BUCKET_NAME`       | `dpia-data-bucket`        | Non     | Non    |
+| Variable                | Valeur             | Protégé | Masqué |
+| ----------------------- | ------------------ | ------- | ------ |
+| `AWS_ACCESS_KEY_ID`     | Votre clé AWS      | Oui     | Oui    |
+| `AWS_SECRET_ACCESS_KEY` | Votre secret AWS   | Oui     | Oui    |
+| `AWS_DEFAULT_REGION`    | `eu-west-1`        | Non     | Non    |
+| `S3_BUCKET_NAME`        | `dpia-data-bucket` | Non     | Non    |
 
 ---
 
@@ -215,6 +216,7 @@ git push origin main
 ```
 
 Le pipeline GitLab CI/CD va :
+
 1. **lint** — Vérifier le code avec flake8
 2. **build** — Construire l'image Docker
 3. **test** — Exécuter les tests unitaires et d'intégration
@@ -238,6 +240,7 @@ sudo -u gitlab-runner docker logs dpia-airflow-webserver --tail 20
 ```
 
 Accès via navigateur :
+
 - **Airflow** : `http://<IP_EC2>:8080` (admin / admin)
 - **Dashboard** : `http://<IP_EC2>:8050`
 - **Grafana** : `http://<IP_EC2>:3000`

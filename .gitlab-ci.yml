@@ -114,14 +114,14 @@ deploy:production:
     - echo "Waiting for PostgreSQL..."
     - timeout 60 bash -c 'until docker exec dpia-postgres pg_isready -U airflow; do sleep 3; done'
     - docker exec dpia-postgres psql -U airflow -c "CREATE DATABASE dpia_db;" 2>/dev/null || true
-    - echo "Waiting for ETL to finish..."
-    - timeout 120 bash -c 'until [ "$(docker inspect -f {{.State.Status}} dpia-etl-transform 2>/dev/null)" = "exited" ]; do sleep 5; done' || true
-    - docker restart dpia-etl-transform
-    - sleep 30
-    - docker restart dpia-dashboard
     - echo "Waiting for Airflow webserver..."
     - timeout 300 bash -c 'until curl -sf http://localhost:8080/health; do sleep 10; done' || echo "Airflow still starting..."
-    - echo "Production deploy OK"
+    - echo "Triggering initial DAG run..."
+    - docker exec dpia-airflow-scheduler airflow dags unpause dpia_pipeline || true
+    - docker exec dpia-airflow-scheduler airflow dags trigger dpia_pipeline || true
+    - sleep 10
+    - docker restart dpia-dashboard
+    - echo "Production deploy OK — pipeline orchestré par Airflow"
   environment:
     name: production
   rules:
