@@ -46,15 +46,15 @@ def make_kpi_card(icon_class, title, value, card_id=None):
                     }),
                 ], style={
                     "display": "flex", "justifyContent": "space-between",
-                    "alignItems": "center", "marginBottom": "16px",
+                    "alignItems": "center", "marginBottom": "10px",
                 }),
                 html.H2(value, style={
-                    "fontWeight": "700", "fontSize": "32px",
+                    "fontWeight": "700", "fontSize": "22px",
                     "color": PALETTE["primary"],
                     "fontFamily": "Inter, sans-serif",
                     "margin": 0, "lineHeight": "1.1",
                 }),
-            ], style={"padding": "24px"}),
+            ], style={"padding": "16px"}),
         ], **props),
         xs=12, sm=6, lg=True, className="mb-4",
     )

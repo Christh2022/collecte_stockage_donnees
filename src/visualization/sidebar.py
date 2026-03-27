@@ -30,18 +30,19 @@ def _nav_link(ico, label, href, is_active=False):
     return dcc.Link([
         active_bar,
         html.I(className=f"{ico}",
-               style={"width": "18px", "textAlign": "center",
+               style={"width": "16px", "textAlign": "center",
                       "color": SB["white"] if is_active else SB["text_dim"],
-                      "fontSize": "14px", "flexShrink": "0"}),
+                      "fontSize": "12px", "flexShrink": "0"}),
         html.Span(label, style={
-            "fontSize": "14px",
+            "fontSize": "12px",
             "color": SB["white"] if is_active else SB["text"],
             "fontWeight": "500" if is_active else "400",
-            "marginLeft": "12px",
+            "marginLeft": "10px",
+            "lineHeight": "1.2",
         }),
     ], href=href, style={
         "display": "flex", "alignItems": "center", "position": "relative",
-        "padding": "10px 20px", "textDecoration": "none",
+        "padding": "7px 16px", "textDecoration": "none",
         "borderRadius": "0", "marginBottom": "2px",
         "backgroundColor": SB["surface"] if is_active else "transparent",
         "transition": "background .15s ease",
@@ -63,17 +64,17 @@ sidebar = html.Div([
         }),
         html.Div([
             html.Span("DPIA", style={
-                "fontWeight": "700", "fontSize": "16px",
+                "fontWeight": "700", "fontSize": "13px",
                 "color": SB["white"], "letterSpacing": "0.02em",
             }),
             html.Span(" Analytics", style={
-                "fontWeight": "400", "fontSize": "16px",
+                "fontWeight": "400", "fontSize": "13px",
                 "color": SB["text"],
             }),
-        ], style={"marginLeft": "12px"}),
+        ], style={"marginLeft": "10px"}),
     ], style={
         "display": "flex", "alignItems": "center",
-        "padding": "24px 20px 20px",
+        "padding": "16px 16px 14px",
     }),
 
     # ── Navigation ────────────────────────────────────────
@@ -91,8 +92,8 @@ sidebar = html.Div([
 
         html.Div([
             html.Label("Ville", style={
-                "fontSize": "12px", "fontWeight": "500",
-                "color": SB["text"], "marginBottom": "6px",
+                "fontSize": "11px", "fontWeight": "500",
+                "color": SB["text"], "marginBottom": "4px",
                 "display": "block",
             }),
             dcc.Dropdown(
@@ -104,12 +105,12 @@ sidebar = html.Div([
                 value="ALL", clearable=False,
                 className="sidebar-dropdown",
             ),
-        ], style={"marginBottom": "16px"}),
+        ], style={"marginBottom": "12px"}),
 
         html.Div([
             html.Label("Contrat", style={
-                "fontSize": "12px", "fontWeight": "500",
-                "color": SB["text"], "marginBottom": "6px",
+                "fontSize": "11px", "fontWeight": "500",
+                "color": SB["text"], "marginBottom": "4px",
                 "display": "block",
             }),
             dcc.Dropdown(
@@ -121,12 +122,12 @@ sidebar = html.Div([
                 value="ALL", clearable=False,
                 className="sidebar-dropdown",
             ),
-        ], style={"marginBottom": "16px"}),
+        ], style={"marginBottom": "12px"}),
 
         html.Div([
             html.Label("Salaire (k€)", style={
-                "fontSize": "12px", "fontWeight": "500",
-                "color": SB["text"], "marginBottom": "10px",
+                "fontSize": "11px", "fontWeight": "500",
+                "color": SB["text"], "marginBottom": "6px",
                 "display": "block",
             }),
             dcc.RangeSlider(
@@ -139,7 +140,7 @@ sidebar = html.Div([
                 tooltip={"placement": "bottom", "always_visible": False},
             ),
         ]),
-    ], style={"padding": "12px 20px 20px"}),
+    ], style={"padding": "10px 16px 16px"}),
 
     # ── Spacer ────────────────────────────────────────────
     html.Div(style={"flex": "1"}),
@@ -155,15 +156,15 @@ sidebar = html.Div([
                    style={"fontSize": "10px", "color": SB["text_dim"],
                           "marginRight": "6px"}),
             html.Span("Source : Adzuna API", style={
-                "fontSize": "11px", "color": SB["text_dim"]}),
+                "fontSize": "10px", "color": SB["text_dim"]}),
         ], style={"textAlign": "center", "marginBottom": "8px",
                   "display": "flex", "alignItems": "center",
                   "justifyContent": "center"}),
         html.Div([
             html.Span("© 2026 — DPIA Project", style={
-                "fontSize": "11px", "color": SB["text_dim"]}),
+                "fontSize": "10px", "color": SB["text_dim"]}),
         ], style={"textAlign": "center"}),
-    ], style={"padding": "0 20px 20px"}),
+    ], style={"padding": "0 16px 14px"}),
 
 ], style={
     "position": "fixed", "top": 0, "left": 0, "bottom": 0,
