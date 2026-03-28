@@ -16,7 +16,7 @@ from src.visualization.components import (
     make_salary_card, make_skeleton_chart, make_skeleton_kpi_row,
     make_skeleton_map, make_skeleton_table, styled_fig,
 )
-from src.visualization.config import PALETTE, PLOT_COLORS, SKELETON_DELAY
+from src.visualization.config import PALETTE, SKELETON_DELAY
 from src.visualization.data import _read_store
 
 
