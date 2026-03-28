@@ -121,7 +121,11 @@ deploy:production:
     - sleep 60
     - docker exec dpia-airflow-scheduler airflow dags unpause dpia_pipeline || true
     - docker exec dpia-airflow-scheduler airflow dags trigger dpia_pipeline || true
-    - sleep 10
+    - echo "Waiting for DAG tasks to complete..."
+    - sleep 300
+    - echo "Running ETL export to PostgreSQL..."
+    - docker exec dpia-airflow-scheduler bash -c "cd /opt/airflow && python -m src.transform.etl_transform" || true
+    - docker exec dpia-postgres psql -U airflow -d dpia_db -c "SELECT COUNT(*) FROM offres_emploi_clean;" || true
     - docker restart dpia-dashboard
     - echo "Production deploy OK — pipeline orchestré par Airflow"
   environment:

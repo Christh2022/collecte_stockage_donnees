@@ -6,10 +6,10 @@
               GitLab CI/CD (push main)
                       │
                       ▼
-              ┌──────────────┐
-              │   EC2 t3.large │
-              │  (Ubuntu 22.04) │
-              └──────┬───────┘
+              ┌──────────────────┐
+              │   EC2 t3.large   │
+              │  (Ubuntu 22.04)  │
+              └──────┬───────────┘
                      │  docker compose up
                      ▼
   ┌─────────────────────────────────────────────┐
@@ -24,7 +24,7 @@
   └─────────────────────────────────────────────┘
 ```
 
-**8 containers** : postgres, airflow-init, airflow-webserver, airflow-scheduler, kafka, minio, minio-init, dashboard, node-exporter, docker-exporter, prometheus, grafana.  
+**Containers** : postgres, airflow-init, airflow-webserver, airflow-scheduler, kafka, dashboard, node-exporter, docker-exporter, prometheus, grafana.
 Le scraping et l'ETL sont orchestrés par le **DAG Airflow** (plus de containers standalone).
 
 ## Prérequis
@@ -161,16 +161,7 @@ sudo gitlab-runner register \
 
 ---
 
-## 7. Cloner le projet
-
-```bash
-sudo -u gitlab-runner git clone https://gitlab.com/Christh2022/collecte_stockage_donnees.git \
-  /home/gitlab-runner/collecte_stockage_donnees
-```
-
----
-
-## 8. Créer le fichier .env
+## 7. Créer le fichier .env
 
 ```bash
 sudo bash -c 'cat > /home/gitlab-runner/collecte_stockage_donnees/.env << "EOF"
@@ -209,7 +200,7 @@ EOF'
 
 ---
 
-## 9. Créer le dossier data
+## 8. Créer le dossier data
 
 ```bash
 sudo mkdir -p /home/gitlab-runner/collecte_stockage_donnees/data/clean
@@ -219,7 +210,7 @@ sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/collecte_stockage_
 
 ---
 
-## 10. Configurer les variables CI/CD sur GitLab
+## 9. Configurer les variables CI/CD sur GitLab
 
 Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez (si besoin pour la prod) :
 
@@ -232,7 +223,7 @@ Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez (si be
 
 ---
 
-## 11. Déployer
+## 10. Déployer
 
 Le déploiement est **automatique**. Depuis votre machine locale :
 
@@ -249,28 +240,37 @@ Le pipeline GitLab CI/CD va :
 3. **test** — Exécuter les tests unitaires et d'intégration
 4. **deploy** — Sur l'EC2 :
    - Génère le `.env` à partir des variables CI/CD
-   - `docker compose down --remove-orphans` (nettoyage)
    - `docker compose up -d --force-recreate`
    - Attend PostgreSQL → crée `dpia_db`
-   - Attend Airflow healthy
-   - `airflow dags unpause + trigger dpia_pipeline` (1er scraping + ETL)
-   - Redémarre le dashboard
+   - Attend Airflow healthy (scheduler + webserver)
+   - Attend 60s que le scheduler parse les DAGs
+   - `airflow dags unpause + trigger dpia_pipeline` (scraping + stockage MinIO)
+   - Attend 300s que les tâches Airflow finissent
+   - Re-exécute l'ETL pour export PostgreSQL (via psycopg2 COPY)
+   - Vérifie le nombre de lignes dans `offres_emploi_clean`
+   - Redémarre le dashboard (pour charger les données PostgreSQL)
 
 ---
 
-## 12. Vérifier le déploiement
+## 11. Vérifier le déploiement
 
 Sur l'EC2 :
 
 ```bash
 # Vérifier les containers
-sudo -u gitlab-runner docker ps
+sudo docker ps --format "table {{.Names}}\t{{.Status}}" | sort
 
 # Vérifier Airflow
 curl -s http://localhost:8080/health
 
-# Voir les logs Airflow
-sudo -u gitlab-runner docker logs dpia-airflow-webserver --tail 20
+# Vérifier les tâches du DAG
+sudo docker exec dpia-airflow-scheduler airflow tasks states-for-dag-run dpia_pipeline latest
+
+# Vérifier les données dans PostgreSQL
+sudo docker exec dpia-postgres psql -U airflow -d dpia_db -c "SELECT COUNT(*) FROM offres_emploi_clean;"
+
+# Voir les logs Airflow scheduler
+sudo docker logs dpia-airflow-scheduler --tail 30
 ```
 
 Accès via navigateur :
@@ -302,6 +302,15 @@ docker exec dpia-airflow-scheduler airflow tasks states-for-dag-run dpia_pipelin
 # Relancer le DAG manuellement
 docker exec dpia-airflow-scheduler airflow dags trigger dpia_pipeline
 
+# Relancer l'ETL manuellement (export PostgreSQL)
+docker exec dpia-airflow-scheduler bash -c "cd /opt/airflow && python -m src.transform.etl_transform"
+
+# Vérifier les données PostgreSQL
+docker exec dpia-postgres psql -U airflow -d dpia_db -c "SELECT COUNT(*) FROM offres_emploi_clean;"
+
+# Redémarrer le dashboard (recharge les données)
+docker restart dpia-dashboard
+
 # Redémarrer toute l'infra
 INFRA_DIR=$(sudo find /home/gitlab-runner/builds -name docker-compose.yml -path '*/infra/*' -printf '%h' -quit)
 sudo bash -c "cd $INFRA_DIR && docker compose down --remove-orphans && docker compose up -d"
@@ -313,15 +322,30 @@ sudo gitlab-runner verify
 # Espace disque
 df -h /
 docker system df
+
+# Nettoyage complet (⚠ supprime toutes les données)
+docker system prune -af --volumes
 ```
 
 ## Datasets Airflow
 
 Le DAG utilise des **Datasets** pour la traçabilité des données (visible dans Airflow UI → Datasets) :
 
-| Dataset | URI | Produit par | Consommé par |
-|---------|-----|-------------|------|
-| kafka_raw | `kafka://kafka:29092/job-offers` | scrape_adzuna | kafka_to_s3 |
-| s3_lesjeudis | `s3://dpia-data-bucket/lesjeudis/` | scrape_lesjeudis | etl_transform |
-| s3_adzuna | `s3://dpia-data-bucket/adzuna/` | kafka_to_s3 | etl_transform |
-| pg_clean | `postgres://...dpia_db/offres_emploi_clean` | etl_transform | Dashboard |
+| Dataset      | URI                                         | Produit par      | Consommé par  |
+| ------------ | ------------------------------------------- | ---------------- | ------------- |
+| kafka_raw    | `kafka://kafka:29092/job-offers`            | scrape_adzuna    | kafka_to_s3   |
+| s3_lesjeudis | `s3://dpia-data-bucket/lesjeudis/`          | scrape_lesjeudis | etl_transform |
+| s3_adzuna    | `s3://dpia-data-bucket/adzuna/`             | kafka_to_s3      | etl_transform |
+| pg_clean     | `postgres://...dpia_db/offres_emploi_clean` | etl_transform    | Dashboard     |
+
+## Flux des données
+
+```
+Adzuna API ──→ Kafka ──→ MinIO (S3) ──┐
+                                        ├──→ ETL (psycopg2 COPY) ──→ PostgreSQL ──→ Dashboard
+LesJeudis  ──→ MinIO (S3) ────────────┘
+                                                                          ↓
+                                                                    CSV (backup)
+```
+
+**Export PostgreSQL** : L'ETL utilise `psycopg2.copy_expert()` avec `COPY ... FROM STDIN WITH CSV` pour une insertion rapide et compatible avec toutes les versions de SQLAlchemy.
