@@ -117,6 +117,8 @@ deploy:production:
     - echo "Waiting for Airflow webserver..."
     - timeout 300 bash -c 'until curl -sf http://localhost:8080/health; do sleep 10; done' || echo "Airflow still starting..."
     - echo "Triggering initial DAG run..."
+    - echo "Waiting for scheduler to parse DAGs..."
+    - sleep 60
     - docker exec dpia-airflow-scheduler airflow dags unpause dpia_pipeline || true
     - docker exec dpia-airflow-scheduler airflow dags trigger dpia_pipeline || true
     - sleep 10
