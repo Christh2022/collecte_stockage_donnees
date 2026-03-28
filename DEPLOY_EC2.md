@@ -327,10 +327,9 @@ Le DAG utilise des **Datasets** pour la tracabilite des donnees (visible dans Ai
 
 ```
 Adzuna API --> Kafka --> MinIO (S3) ------+
-                                         |---> ETL (psycopg2 COPY) --> PostgreSQL --> Dashboard
-LesJeudis  --> MinIO (S3) ----------------+
-                                                                          |
-                                                                    CSV (backup)
+                                         |---> ETL (psycopg2 COPY) --+--> PostgreSQL --> Dashboard
+LesJeudis  --> MinIO (S3) ----------------+                          |
+                                                                     +--> CSV (backup)
 ```
 
 **Export PostgreSQL** : L'ETL utilise `psycopg2.copy_expert()` avec `COPY ... FROM STDIN WITH CSV` pour une insertion rapide et compatible avec toutes les versions de SQLAlchemy.

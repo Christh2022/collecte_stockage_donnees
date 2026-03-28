@@ -39,19 +39,25 @@ Ce document définit la politique de gouvernance des données du projet **DPIA**
 ## 3. Cycle de vie des données
 
 ```
- Collecte          Ingestion         Stockage           Transformation      Visualisation
-+-----------+     +-----------+     +--------------+    +--------------+   +-------------+
-| Adzuna    |---->|  Kafka    |---->|              |    |              |   |             |
-| API       |     |  (topic)  |     |   MinIO      |--->|  ETL         |-->|  Dashboard  |
-+-----------+     +-----------+     |   (raw/)     |    |  (pandas +   |   |  (Dash)     |
-| LesJeudis |---------------------->|              |    |   psycopg2)  |   |             |
-+-----------+                       +--------------+    +------+-------+   +-------------+
-                                                               |
-                                                        +------+-------+
-                                                        | PostgreSQL   |
-                                                        | (dpia_db)    |
-                                                        | CSV export   |
-                                                        +--------------+
+ Collecte          Ingestion         Stockage           Transformation       Visualisation
++-----------+     +-----------+     +--------------+    +--------------+
+| Adzuna    |---->|  Kafka    |---->|              |    |              |
+| API       |     |  (topic)  |     |   MinIO      |--->|  ETL         |
++-----------+     +-----------+     |   (raw/)     |    |  (pandas +   |
+| LesJeudis |---------------------->|              |    |   psycopg2)  |
++-----------+                       +--------------+    +---+------+---+
+                                                            |      |
+                                                            v      v
+                                                  +-----------+  +----------+
+                                                  | PostgreSQL|  |   CSV    |
+                                                  | (dpia_db) |  | (backup) |
+                                                  +-----+-----+  +----------+
+                                                        |
+                                                        v
+                                                  +-------------+
+                                                  |  Dashboard  |
+                                                  |  (Dash)     |
+                                                  +-------------+
 ```
 
 | Phase            | Stockage              | Durée de rétention | Format            |
