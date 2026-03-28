@@ -53,12 +53,13 @@
     border: 1px solid #374151 !important;
     border-radius: 8px !important;
     color: #D1D5DB !important;
-    font-size: 13px !important;
+    font-size: 9px !important;
     min-height: 36px !important;
 }
 .sidebar-dropdown .Select-value-label,
 .sidebar-dropdown .Select-placeholder {
     color: #D1D5DB !important;
+    font-size: 9px !important;
 }
 .sidebar-dropdown .Select-menu-outer {
     background-color: #1F2937 !important;
@@ -68,6 +69,7 @@
 .sidebar-dropdown .VirtualizedSelectOption {
     background-color: #1F2937 !important;
     color: #D1D5DB !important;
+    font-size: 9px !important;
 }
 .sidebar-dropdown .VirtualizedSelectFocusedOption {
     background-color: #374151 !important;
