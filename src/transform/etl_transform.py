@@ -639,8 +639,9 @@ def export_sql(df: pd.DataFrame) -> None:
 
     try:
         engine = create_engine(connection_string)
-        df.to_sql(SQL_TABLE, engine, if_exists="replace", index=False, chunksize=500, method="multi")
         with engine.connect() as conn:
+            df.to_sql(SQL_TABLE, conn, if_exists="replace", index=False, chunksize=500, method="multi")
+            conn.commit()
             result = conn.execute(text(f"SELECT COUNT(*) FROM {SQL_TABLE}"))
             count = result.scalar()
         logger.info("[SQL] %d lignes inserees dans '%s'", count, SQL_TABLE)
