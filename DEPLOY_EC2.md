@@ -1,5 +1,32 @@
 # Déploiement sur AWS EC2 — Guide complet
 
+## Architecture
+
+```
+              GitLab CI/CD (push main)
+                      │
+                      ▼
+              ┌──────────────┐
+              │   EC2 t3.large │
+              │  (Ubuntu 22.04) │
+              └──────┬───────┘
+                     │  docker compose up
+                     ▼
+  ┌─────────────────────────────────────────────┐
+  │  Airflow (scheduler + webserver)            │
+  │    DAG: dpia_pipeline (quotidien 8h UTC)    │
+  │    ├── scrape_adzuna ──→ kafka_to_s3 ──┐    │
+  │    │                                    ├──→ etl_transform → PostgreSQL
+  │    └── scrape_lesjeudis ───────────────┘    │
+  ├─────────────────────────────────────────────┤
+  │  Kafka (KRaft) │ MinIO (S3) │ PostgreSQL    │
+  │  Dashboard     │ Grafana    │ Prometheus    │
+  └─────────────────────────────────────────────┘
+```
+
+**8 containers** : postgres, airflow-init, airflow-webserver, airflow-scheduler, kafka, minio, minio-init, dashboard, node-exporter, docker-exporter, prometheus, grafana.  
+Le scraping et l'ETL sont orchestrés par le **DAG Airflow** (plus de containers standalone).
+
 ## Prérequis
 
 - Un compte AWS avec accès à EC2
@@ -13,8 +40,8 @@
 1. Connectez-vous à la **console AWS** → **EC2** → **Lancer une instance**
 2. Configuration recommandée :
    - **AMI** : Ubuntu Server 22.04 LTS
-   - **Type** : `t3.medium` (2 vCPU, 4 Go RAM) minimum
-   - **Stockage** : 30 Go gp3
+   - **Type** : `t3.large` (2 vCPU, 8 Go RAM) — minimum requis pour Airflow + Kafka
+   - **Stockage** : 100 Go gp3 (Docker images + volumes Kafka/MinIO)
    - **Paire de clés** : sélectionnez ou créez une clé `.pem`
 3. **Groupe de sécurité** — ouvrir les ports entrants :
 
@@ -218,9 +245,16 @@ git push origin main
 Le pipeline GitLab CI/CD va :
 
 1. **lint** — Vérifier le code avec flake8
-2. **build** — Construire l'image Docker
+2. **build** — Construire l'image Docker et push au registre GitLab
 3. **test** — Exécuter les tests unitaires et d'intégration
-4. **deploy** — Sur l'EC2, `git pull` + `docker compose up -d`
+4. **deploy** — Sur l'EC2 :
+   - Génère le `.env` à partir des variables CI/CD
+   - `docker compose down --remove-orphans` (nettoyage)
+   - `docker compose up -d --force-recreate`
+   - Attend PostgreSQL → crée `dpia_db`
+   - Attend Airflow healthy
+   - `airflow dags unpause + trigger dpia_pipeline` (1er scraping + ETL)
+   - Redémarre le dashboard
 
 ---
 
@@ -258,12 +292,36 @@ docker ps -a
 # Logs d'un container
 docker logs <nom_container> --tail 50
 
+# Logs Airflow scheduler (exécution des tâches)
+docker logs dpia-airflow-scheduler --tail 100
+
+# Vérifier l'état du DAG
+docker exec dpia-airflow-scheduler airflow dags list
+docker exec dpia-airflow-scheduler airflow tasks states-for-dag-run dpia_pipeline latest
+
+# Relancer le DAG manuellement
+docker exec dpia-airflow-scheduler airflow dags trigger dpia_pipeline
+
 # Redémarrer toute l'infra
-cd /home/gitlab-runner/collecte_stockage_donnees/infra
-sudo -u gitlab-runner docker compose down
-sudo -u gitlab-runner docker compose up -d
+INFRA_DIR=$(sudo find /home/gitlab-runner/builds -name docker-compose.yml -path '*/infra/*' -printf '%h' -quit)
+sudo bash -c "cd $INFRA_DIR && docker compose down --remove-orphans && docker compose up -d"
 
 # Vérifier le runner
 sudo gitlab-runner status
 sudo gitlab-runner verify
+
+# Espace disque
+df -h /
+docker system df
 ```
+
+## Datasets Airflow
+
+Le DAG utilise des **Datasets** pour la traçabilité des données (visible dans Airflow UI → Datasets) :
+
+| Dataset | URI | Produit par | Consommé par |
+|---------|-----|-------------|------|
+| kafka_raw | `kafka://kafka:29092/job-offers` | scrape_adzuna | kafka_to_s3 |
+| s3_lesjeudis | `s3://dpia-data-bucket/lesjeudis/` | scrape_lesjeudis | etl_transform |
+| s3_adzuna | `s3://dpia-data-bucket/adzuna/` | kafka_to_s3 | etl_transform |
+| pg_clean | `postgres://...dpia_db/offres_emploi_clean` | etl_transform | Dashboard |
