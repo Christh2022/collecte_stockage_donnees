@@ -253,6 +253,28 @@ def register_callbacks(app):
         df_sal = df.dropna(subset=["salary_avg"])
         if df_sal.empty or "contract_type" not in df_sal.columns:
             return empty_fig("Pas assez de données salariales")
+
+        def _norm_contract(val):
+            if not isinstance(val, str):
+                return "Autre"
+            v = val.lower().strip()
+            if "cdi" in v:
+                return "CDI"
+            if "cdd" in v:
+                return "CDD"
+            if "freelance" in v or "indépendant" in v:
+                return "Freelance"
+            if "stage" in v:
+                return "Stage"
+            if "alternance" in v or "apprentissage" in v:
+                return "Alternance"
+            if "intérim" in v or "interim" in v:
+                return "Intérim"
+            return "Autre"
+
+        df_sal = df_sal.copy()
+        df_sal["contract_type"] = df_sal["contract_type"].apply(_norm_contract)
+
         fig = px.box(
             df_sal, x="contract_type", y="salary_avg",
             color="contract_type", color_discrete_sequence=PLOT_COLORS,

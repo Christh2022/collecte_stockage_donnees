@@ -4,24 +4,24 @@
 
 ```
               GitLab CI/CD (push main)
-                      │
-                      ▼
-              ┌──────────────────┐
-              │   EC2 t3.large   │
-              │  (Ubuntu 22.04)  │
-              └──────┬───────────┘
-                     │  docker compose up
-                     ▼
-  ┌─────────────────────────────────────────────┐
-  │  Airflow (scheduler + webserver)            │
-  │    DAG: dpia_pipeline (quotidien 8h UTC)    │
-  │    ├── scrape_adzuna ──→ kafka_to_s3 ──┐    │
-  │    │                                    ├──→ etl_transform → PostgreSQL
-  │    └── scrape_lesjeudis ───────────────┘    │
-  ├─────────────────────────────────────────────┤
-  │  Kafka (KRaft) │ MinIO (S3) │ PostgreSQL    │
-  │  Dashboard     │ Grafana    │ Prometheus    │
-  └─────────────────────────────────────────────┘
+                      |
+                      v
+              +------------------+
+              |   EC2 t3.large   |
+              |  (Ubuntu 22.04)  |
+              +------+-----------+
+                     |  docker compose up
+                     v
+  +---------------------------------------------+
+  |  Airflow (scheduler + webserver)            |
+  |    DAG: dpia_pipeline (quotidien 8h UTC)    |
+  |    |-- scrape_adzuna --> kafka_to_s3 ---+    |
+  |    |                                    |---> etl_transform -- PostgreSQL
+  |    +-- scrape_lesjeudis ----------------+    |
+  +---------------------------------------------+
+  |  Kafka (KRaft) | MinIO (S3) | PostgreSQL    |
+  |  Dashboard     | Grafana    | Prometheus    |
+  +---------------------------------------------+
 ```
 
 **Containers** : postgres, airflow-init, airflow-webserver, airflow-scheduler, kafka, dashboard, node-exporter, docker-exporter, prometheus, grafana.
@@ -37,7 +37,7 @@ Le scraping et l'ETL sont orchestrés par le **DAG Airflow** (plus de containers
 
 ## 1. Créer l'instance EC2
 
-1. Connectez-vous à la **console AWS** → **EC2** → **Lancer une instance**
+1. Connectez-vous a la **console AWS** puis **EC2** puis **Lancer une instance**
 2. Configuration recommandée :
    - **AMI** : Ubuntu Server 22.04 LTS
    - **Type** : `t3.large` (2 vCPU, 8 Go RAM) — minimum requis pour Airflow + Kafka
@@ -114,7 +114,46 @@ git --version
 
 ---
 
-## 5. Installer GitLab Runner
+## 5. Configurer les variables CI/CD sur GitLab
+
+Dans **GitLab** > **Settings** > **CI/CD** > **Variables**, ajoutez toutes les variables d'environnement **avant de lancer le premier deploiement** :
+
+| Variable                  | Valeur                | Protégé | Masqué |
+| ------------------------- | --------------------- | ------- | ------ |
+| `ENV_MODE`                | `dev`                 | Non     | Non    |
+| `S3_BUCKET_NAME`          | `dpia-data-bucket`    | Non     | Non    |
+| `RDS_HOST`                | `postgres`            | Non     | Non    |
+| `RDS_PORT`                | `5432`                | Non     | Non    |
+| `RDS_DB_NAME`             | `dpia_db`             | Non     | Non    |
+| `RDS_USERNAME`            | `airflow`             | Non     | Non    |
+| `RDS_PASSWORD`            | `airflow`             | Oui     | Oui    |
+| `MINIO_ENDPOINT`          | `http://minio:9000`   | Non     | Non    |
+| `MINIO_ROOT_USER`         | `minioadmin`          | Oui     | Oui    |
+| `MINIO_ROOT_PASSWORD`     | `minioadmin`          | Oui     | Oui    |
+| `ADZUNA_APP_ID`           | `votre_app_id`        | Oui     | Oui    |
+| `ADZUNA_API_KEY`          | `votre_api_key`       | Oui     | Oui    |
+| `ADZUNA_COUNTRY`          | `fr`                  | Non     | Non    |
+| `ADZUNA_SEARCH_QUERY`     | `data science`        | Non     | Non    |
+| `ADZUNA_MAX_PAGES`        | `5`                   | Non     | Non    |
+| `KAFKA_BOOTSTRAP_SERVERS` | `kafka:29092`         | Non     | Non    |
+| `KAFKA_TOPIC_RAW`         | `job_api_raw`         | Non     | Non    |
+| `KAFKA_GROUP_ID`          | `s3-consumer-group`   | Non     | Non    |
+| `CONSUMER_BATCH_SIZE`     | `50`                  | Non     | Non    |
+| `CONSUMER_BATCH_TIMEOUT`  | `60`                  | Non     | Non    |
+| `API_MAX_RETRIES`         | `5`                   | Non     | Non    |
+| `API_RETRY_BASE_DELAY`    | `2`                   | Non     | Non    |
+| `S3_PREFIX`               | `raw/adzuna`          | Non     | Non    |
+| `S3_PREFIX_WTJ`           | `raw/wtj`             | Non     | Non    |
+| `ETL_OUTPUT_DIR`          | `data/clean`          | Non     | Non    |
+| `ETL_SQL_TABLE`           | `offres_emploi_clean` | Non     | Non    |
+
+> **Note** : Les clés AWS (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) ne sont **pas nécessaires** car le projet utilise **MinIO** comme stockage S3 local.
+>
+> Le fichier `.env` est **généré automatiquement** par le pipeline CI/CD à partir de ces variables. Pas besoin de le créer manuellement sur l'EC2.
+
+---
+
+## 6. Installer GitLab Runner
 
 ```bash
 # Télécharger le binaire
@@ -140,9 +179,9 @@ sudo gitlab-runner status
 
 ---
 
-## 6. Enregistrer le Runner sur GitLab
+## 7. Enregistrer le Runner sur GitLab
 
-1. Dans GitLab, allez dans **Settings** → **CI/CD** → **Runners** → **New project runner**
+1. Dans GitLab, allez dans **Settings** > **CI/CD** > **Runners** > **New project runner**
 2. Cochez **Run untagged jobs** et ajoutez le tag : `ec2-shell`
 3. Copiez le **token** affiché
 4. Sur l'EC2 :
@@ -153,46 +192,10 @@ sudo gitlab-runner register \
   --url "https://gitlab.com/" \
   --token "VOTRE_RUNNER_TOKEN" \
   --executor "shell" \
-  --description "EC2 DPIA Runner" \
-  --tag-list "ec2-shell"
+  --description "EC2 DPIA Runner"
 ```
 
-5. Vérifiez que le runner apparaît **en ligne (vert)** dans GitLab → Settings → CI/CD → Runners
-
----
-
-## 7. Créer le fichier .env
-
-```bash
-sudo bash -c 'cat > /home/gitlab-runner/collecte_stockage_donnees/.env << "EOF"
-ENV_MODE=dev
-S3_BUCKET_NAME=dpia-data-bucket
-RDS_HOST=postgres
-RDS_PORT=5432
-RDS_DB_NAME=dpia_db
-RDS_USERNAME=airflow
-RDS_PASSWORD=airflow
-MINIO_ENDPOINT=http://minio:9000
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-ADZUNA_APP_ID=8c5da6fd
-ADZUNA_API_KEY=28d1f034ca7c72e30d62c1c28798e785
-ADZUNA_COUNTRY=fr
-ADZUNA_SEARCH_QUERY=data science
-ADZUNA_MAX_PAGES=5
-KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-KAFKA_TOPIC_RAW=job_api_raw
-KAFKA_GROUP_ID=s3-consumer-group
-CONSUMER_BATCH_SIZE=50
-CONSUMER_BATCH_TIMEOUT=60
-API_MAX_RETRIES=5
-API_RETRY_BASE_DELAY=2
-S3_PREFIX=raw/adzuna
-S3_PREFIX_WTJ=raw/wtj
-ETL_OUTPUT_DIR=data/clean
-ETL_SQL_TABLE=offres_emploi_clean
-EOF'
-```
+5. Verifiez que le runner apparait **en ligne (vert)** dans GitLab > Settings > CI/CD > Runners
 
 ---
 
@@ -200,21 +203,12 @@ EOF'
 
 ```bash
 sudo mkdir -p /home/gitlab-runner/collecte_stockage_donnees/data/clean
-sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/collecte_stockage_donnees/.env \
-  /home/gitlab-runner/collecte_stockage_donnees/data
+sudo chmod -R 777 /home/gitlab-runner/collecte_stockage_donnees/data
 ```
 
 ---
 
-## 9. Configurer les variables CI/CD sur GitLab
-
-Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez les variables d'environnement nécessaires (ADZUNA_APP_ID, ADZUNA_API_KEY, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, etc.).
-
-> **Note** : Les clés AWS (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) ne sont **pas nécessaires** car le projet utilise **MinIO** comme stockage S3 local, pas AWS S3.
-
----
-
-## 10. Déployer
+## 9. Déployer
 
 Le déploiement est **automatique**. Depuis votre machine locale :
 
@@ -232,7 +226,7 @@ Le pipeline GitLab CI/CD va :
 4. **deploy** — Sur l'EC2 :
    - Génère le `.env` à partir des variables CI/CD
    - `docker compose up -d --force-recreate`
-   - Attend PostgreSQL → crée `dpia_db`
+   - Attend PostgreSQL puis cree `dpia_db`
    - Attend Airflow healthy (scheduler + webserver)
    - Attend 60s que le scheduler parse les DAGs
    - `airflow dags unpause + trigger dpia_pipeline` (scraping + stockage MinIO)
@@ -243,7 +237,7 @@ Le pipeline GitLab CI/CD va :
 
 ---
 
-## 11. Vérifier le déploiement
+## 10. Vérifier le déploiement
 
 Sur l'EC2 :
 
@@ -314,13 +308,13 @@ sudo gitlab-runner verify
 df -h /
 docker system df
 
-# Nettoyage complet (⚠ supprime toutes les données)
+# Nettoyage complet (ATTENTION : supprime toutes les donnees)
 docker system prune -af --volumes
 ```
 
 ## Datasets Airflow
 
-Le DAG utilise des **Datasets** pour la traçabilité des données (visible dans Airflow UI → Datasets) :
+Le DAG utilise des **Datasets** pour la tracabilite des donnees (visible dans Airflow UI > Datasets) :
 
 | Dataset      | URI                                         | Produit par      | Consommé par  |
 | ------------ | ------------------------------------------- | ---------------- | ------------- |
@@ -332,10 +326,10 @@ Le DAG utilise des **Datasets** pour la traçabilité des données (visible dans
 ## Flux des données
 
 ```
-Adzuna API ──→ Kafka ──→ MinIO (S3) ──┐
-                                        ├──→ ETL (psycopg2 COPY) ──→ PostgreSQL ──→ Dashboard
-LesJeudis  ──→ MinIO (S3) ────────────┘
-                                                                          ↓
+Adzuna API --> Kafka --> MinIO (S3) ------+
+                                         |---> ETL (psycopg2 COPY) --> PostgreSQL --> Dashboard
+LesJeudis  --> MinIO (S3) ----------------+
+                                                                          |
                                                                     CSV (backup)
 ```
 

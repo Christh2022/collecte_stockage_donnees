@@ -234,6 +234,29 @@ def register_callbacks(app):
         df = _read_store(data)
         if df.empty or "tech_stack" not in df.columns or "contract_type" not in df.columns:
             return empty_fig("Aucune donnée")
+
+        # Normaliser les types de contrat
+        def _norm_contract(val):
+            if not isinstance(val, str):
+                return "Autre"
+            v = val.lower().strip()
+            if "cdi" in v:
+                return "CDI"
+            if "cdd" in v:
+                return "CDD"
+            if "freelance" in v or "indépendant" in v:
+                return "Freelance"
+            if "stage" in v:
+                return "Stage"
+            if "alternance" in v or "apprentissage" in v:
+                return "Alternance"
+            if "intérim" in v or "interim" in v:
+                return "Intérim"
+            return "Autre"
+
+        df = df.copy()
+        df["contract_type"] = df["contract_type"].apply(_norm_contract)
+
         top_skills = []
         for stack in df["tech_stack"].dropna():
             if stack.strip():
