@@ -166,16 +166,12 @@ sudo gitlab-runner register \
 ```bash
 sudo bash -c 'cat > /home/gitlab-runner/collecte_stockage_donnees/.env << "EOF"
 ENV_MODE=dev
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_DEFAULT_REGION=eu-west-1
 S3_BUCKET_NAME=dpia-data-bucket
 RDS_HOST=postgres
 RDS_PORT=5432
 RDS_DB_NAME=dpia_db
 RDS_USERNAME=airflow
 RDS_PASSWORD=airflow
-CLOUDWATCH_LOG_GROUP=/dpia/pipeline
 MINIO_ENDPOINT=http://minio:9000
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
@@ -212,14 +208,9 @@ sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/collecte_stockage_
 
 ## 9. Configurer les variables CI/CD sur GitLab
 
-Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez (si besoin pour la prod) :
+Dans **GitLab** → **Settings** → **CI/CD** → **Variables**, ajoutez les variables d'environnement nécessaires (ADZUNA_APP_ID, ADZUNA_API_KEY, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, etc.).
 
-| Variable                | Valeur             | Protégé | Masqué |
-| ----------------------- | ------------------ | ------- | ------ |
-| `AWS_ACCESS_KEY_ID`     | Votre clé AWS      | Oui     | Oui    |
-| `AWS_SECRET_ACCESS_KEY` | Votre secret AWS   | Oui     | Oui    |
-| `AWS_DEFAULT_REGION`    | `eu-west-1`        | Non     | Non    |
-| `S3_BUCKET_NAME`        | `dpia-data-bucket` | Non     | Non    |
+> **Note** : Les clés AWS (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) ne sont **pas nécessaires** car le projet utilise **MinIO** comme stockage S3 local, pas AWS S3.
 
 ---
 
