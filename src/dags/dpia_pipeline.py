@@ -63,7 +63,12 @@ with DAG(
     )
 
     # ── Dépendances ───────────────────────────────────────
-    # Adzuna → Kafka consumer → ETL
-    # LesJeudis →                ETL  (en parallèle)
-    scrape_adzuna >> kafka_to_s3
-    [kafka_to_s3, scrape_lesjeudis] >> etl_transform
+    # 1. Les deux scrapers tournent en parallèle
+    # 2. Kafka consumer attend qu'Adzuna ait fini d'écrire dans Kafka
+    # 3. ETL attend que TOUT le stockage MinIO/S3 soit terminé
+    #
+    #  scrape_adzuna ──→ kafka_to_s3 ──┐
+    #                                   ├──→ etl_transform
+    #  scrape_lesjeudis ───────────────┘
+    scrape_adzuna >> kafka_to_s3 >> etl_transform
+    scrape_lesjeudis >> etl_transform

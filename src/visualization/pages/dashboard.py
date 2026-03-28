@@ -265,20 +265,75 @@ def register_callbacks(app):
         df = _read_store(data)
         if df.empty or "contract_type" not in df.columns:
             return empty_fig("Aucune donnée")
-        counts = df["contract_type"].fillna("Non précisé").value_counts()
+
+        # ── Normaliser les types de contrat ───────────────
+        raw = df["contract_type"].fillna("Non précisé").str.strip().str.lower()
+        mapping = {
+            "cdi": "CDI", "contrat à durée indéterminée": "CDI",
+            "cdd": "CDD", "contrat à durée déterminée": "CDD",
+            "stage": "Stage", "internship": "Stage",
+            "alternance": "Alternance", "apprentissage": "Alternance",
+            "freelance": "Freelance", "indépendant": "Freelance",
+            "interim": "Intérim", "intérim": "Intérim",
+            "non précisé": "Non précisé", "": "Non précisé",
+        }
+
+        def _norm(val):
+            if val in mapping:
+                return mapping[val]
+            for key, label in mapping.items():
+                if key in val:
+                    return label
+            return "Autre"
+
+        clean = raw.map(_norm)
+        counts = clean.value_counts()
+
+        # ── Regrouper les catégories < 2% dans "Autre" ───
+        total = counts.sum()
+        main = counts[counts / total >= 0.02]
+        other = counts[counts / total < 0.02].sum()
+        if other > 0:
+            main["Autre"] = main.get("Autre", 0) + other
+
+        # ── Couleurs fixes par catégorie ──────────────────
+        color_map = {
+            "CDI": PALETTE["primary"],
+            "CDD": PALETTE["warning"],
+            "Stage": PALETTE["secondary"],
+            "Alternance": PALETTE["success"],
+            "Freelance": "#E9C46A",
+            "Intérim": "#264653",
+            "Non précisé": PALETTE["muted"],
+            "Autre": "#BEE9E8",
+        }
+
         fig = px.pie(
-            names=counts.index, values=counts.values,
-            color_discrete_sequence=PLOT_COLORS, hole=0.45,
+            names=main.index, values=main.values,
+            color=main.index,
+            color_discrete_map=color_map,
+            hole=0.45,
         )
         fig.update_layout(
             template="plotly_white",
             font=dict(family="Inter, sans-serif", color=PALETTE["dark"]),
             paper_bgcolor=PALETTE["white"],
-            margin=dict(t=10, b=10, l=10, r=10),
-            legend=dict(font=dict(size=11)),
+            margin=dict(t=10, b=30, l=10, r=10),
+            legend=dict(
+                font=dict(size=12),
+                orientation="h",
+                yanchor="bottom", y=-0.15,
+                xanchor="center", x=0.5,
+            ),
         )
-        fig.update_traces(textinfo="percent+label", textfont_size=11,
-                          marker=dict(line=dict(color=PALETTE["white"], width=2)))
+        fig.update_traces(
+            textinfo="percent+label",
+            textfont_size=12,
+            textposition="inside",
+            insidetextorientation="radial",
+            marker=dict(line=dict(color=PALETTE["white"], width=2)),
+            pull=[0.03 if v == main.values.max() else 0 for v in main.values],
+        )
         return fig
 
     @app.callback(Output("chart-map", "figure"), Input("filtered-data", "data"))
