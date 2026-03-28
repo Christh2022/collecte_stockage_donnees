@@ -28,7 +28,6 @@ import time
 import boto3
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
 
 from src.monitoring.logger import get_logger
 
@@ -634,16 +633,28 @@ def export_csv(df: pd.DataFrame) -> str:
 
 
 def export_sql(df: pd.DataFrame) -> None:
-    """Insère le DataFrame dans PostgreSQL (dev) ou AWS RDS (prod)."""
-    connection_string = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    """Insère le DataFrame dans PostgreSQL via psycopg2 COPY (rapide et fiable)."""
+    import psycopg2
 
     try:
-        engine = create_engine(connection_string)
-        with engine.connect() as conn:
-            df.to_sql(SQL_TABLE, conn, if_exists="replace", index=False, chunksize=500, method="multi")
-            conn.commit()
-            result = conn.execute(text(f"SELECT COUNT(*) FROM {SQL_TABLE}"))
-            count = result.scalar()
+        conn = psycopg2.connect(
+            host=DB_HOST, port=int(DB_PORT),
+            dbname=DB_NAME, user=DB_USER, password=DB_PASS,
+        )
+        cur = conn.cursor()
+        cur.execute(f"DROP TABLE IF EXISTS {SQL_TABLE}")
+        col_defs = ", ".join(f'"{c}" TEXT' for c in df.columns)
+        cur.execute(f"CREATE TABLE {SQL_TABLE} ({col_defs})")
+        buf = io.StringIO()
+        df.to_csv(buf, index=False, header=False)
+        buf.seek(0)
+        columns = ", ".join(f'"{c}"' for c in df.columns)
+        cur.copy_expert(f"COPY {SQL_TABLE} ({columns}) FROM STDIN WITH CSV", buf)
+        conn.commit()
+        cur.execute(f"SELECT COUNT(*) FROM {SQL_TABLE}")
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
         logger.info("[SQL] %d lignes inserees dans '%s'", count, SQL_TABLE)
     except Exception as e:
         logger.error("[SQL] Echec insertion : %s", e)
