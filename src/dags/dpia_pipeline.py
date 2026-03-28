@@ -16,7 +16,8 @@ Datasets Airflow :
 
 from datetime import datetime, timedelta
 
-from airflow import DAG, Dataset
+from airflow import DAG
+from airflow.datasets import Dataset
 from airflow.operators.bash import BashOperator
 
 # ── Datasets (traçabilité des données dans l'UI Airflow) ──
